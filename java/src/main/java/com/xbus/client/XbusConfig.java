@@ -16,6 +16,7 @@ public class XbusConfig {
     public String keystoreType = "JKS";
     public String keystorePath;
     public String keystorePassword;
+    public int httpReadTimeout = 5 * 60 * 1000;
 
     public XbusConfig() {
     }

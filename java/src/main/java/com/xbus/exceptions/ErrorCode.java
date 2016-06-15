@@ -1,4 +1,4 @@
-package com.xbus.result;
+package com.xbus.exceptions;
 
 
 /**
