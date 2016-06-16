@@ -7,7 +7,10 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
  * Created by lolynx on 6/14/16.
  */
 public class Service extends ServiceDesc {
+    @Key
     public String name;
+
+    @Key
     public String version;
 
     @Key
@@ -16,8 +19,10 @@ public class Service extends ServiceDesc {
     public Service() {
     }
 
-    public Service(String type, String proto, String description, ServiceEndpoint[] endpoints) {
-        super(type, proto, description);
+    public Service(String name, String version, String type, ServiceEndpoint[] endpoints) {
+        super(type, null, null);
+        this.name = name;
+        this.version = version;
         this.endpoints = endpoints;
     }
 

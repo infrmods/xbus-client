@@ -87,6 +87,8 @@ class Service(object):
 
     @classmethod
     def from_dict(Service, name, version, d):
+        if name != d['name'] or version != d['version']:
+            raise Exception('invalid service: %r' % d)
         endpoints = [ServiceEndpoint(x['address'], x.get('config', None)) for x in d['endpoints']]
         return Service(name, version, d['type'],
                        d.get('proto', None), d.get('description', None),

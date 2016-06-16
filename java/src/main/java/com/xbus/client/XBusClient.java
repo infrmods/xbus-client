@@ -9,6 +9,7 @@ import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.Key;
 import com.xbus.exceptions.DeadlineExceededException;
+import com.xbus.exceptions.ErrorCode;
 import com.xbus.exceptions.XBusException;
 import com.xbus.item.Config;
 import com.xbus.item.Service;
@@ -101,8 +102,9 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         GetServiceResult result = get(new Url(getServicePath(name, version)),
                 GetServiceResult.RESPONSE.class);
         serviceRevisions.putIfAbsent(Service.genId(name, version), result.revision);
-        result.service.name = name;
-        result.service.version = version;
+        if (!result.service.name.equals(name) || !result.service.version.equals(version)) {
+            throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + result.service.toString()));
+        }
         return result.service;
     }
 
@@ -122,6 +124,9 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
             return null;
         }
         serviceRevisions.put(id, result.revision);
+        if (!result.service.name.equals(name) || !result.service.version.equals(version)) {
+            throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + result.service.toString()));
+        }
         return result.service;
     }
 
