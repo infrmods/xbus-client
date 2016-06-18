@@ -1,6 +1,5 @@
 package com.xbus.result;
 
-import com.google.api.client.util.Key;
 import com.xbus.exceptions.ErrorCode;
 import com.xbus.exceptions.XBusException;
 
@@ -9,20 +8,15 @@ import com.xbus.exceptions.XBusException;
  */
 public class Response<T extends Result> {
     public static class Error {
-        @Key
         String code;
 
-        @Key
         String message;
     }
 
-    @Key
     public boolean ok;
 
-    @Key
     public T result;
 
-    @Key
     public Error error;
 
     public T getResult() throws XBusException {

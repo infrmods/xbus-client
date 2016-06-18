@@ -1,16 +1,13 @@
 package com.xbus.item;
 
-import com.google.api.client.util.Key;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 /**
  * Created by lolynx on 6/14/16.
  */
 public class ServiceEndpoint {
-    @Key
     public String address;
 
-    @Key
     public String config;
 
     public ServiceEndpoint() {

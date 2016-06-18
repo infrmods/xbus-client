@@ -1,19 +1,19 @@
 package com.xbus.item;
 
-import com.google.api.client.util.Key;
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 
 /**
  * Created by lolynx on 6/14/16.
  */
 public class ServiceDesc {
-    @Key
+    public String name;
+
+    public String version;
+
     public String type;
 
-    @Key
     public String proto;
 
-    @Key
     public String description;
 
     public ServiceDesc() {
@@ -23,6 +23,14 @@ public class ServiceDesc {
         this.type = type;
         this.proto = proto;
         this.description = description;
+    }
+
+    public String getId() {
+        return name + ":" + version;
+    }
+
+    public static String genId(String name, String version) {
+        return name + ":" + version;
     }
 
     public String toString() {
