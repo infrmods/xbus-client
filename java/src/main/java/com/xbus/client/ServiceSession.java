@@ -57,6 +57,15 @@ public class ServiceSession {
         }
     }
 
+    public void plugServices(ServiceDesc[] desces, ServiceEndpoint endpoint) throws XBusException {
+        Long retLeaseId = client.plugServices(desces, endpoint, ttl);
+        if (leaseId == null ) {
+            leaseId = retLeaseId;
+        } else if (!leaseId.equals(retLeaseId)) {
+            throw XBusException.newException(ErrorCode.Unknown, "leaseId changed");
+        }
+    }
+
     public void unplugService(String name, String version) throws XBusException {
         client.unplugService(name, version);
     }

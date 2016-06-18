@@ -105,18 +105,16 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public long plugService(ServiceDesc desc, ServiceEndpoint endpoint, Integer ttl) throws XBusException {
         PlugServiceResult result = post(
-                new UrlBuilder(getServicePath(desc.name, desc.version)).url(),
+                new UrlBuilder("/api/services").url(),
                 new FormBuilder()
                         .add("desc", gson.toJson(desc))
                         .add("endpoint", gson.toJson(endpoint))
                         .addIfNotNull("ttl", ttl).build(),
                 PlugServiceResult.RESPONSE.class);
-        leaseIds.put(desc.getId(), result.leaseId);
-        addresses.put(desc.getId(), endpoint.address);
         return result.leaseId;
     }
 
-    public long plugAllService(ServiceDesc[] desces, ServiceEndpoint endpoint, Long ttl, Long leaseId) throws XBusException {
+    public long plugServices(ServiceDesc[] desces, ServiceEndpoint endpoint, Integer ttl) throws XBusException {
         PlugServiceResult result = post(
                 new UrlBuilder("/api/services").url(),
                 new FormBuilder()
@@ -170,7 +168,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         }
         ServiceEndpoint endpoint = new ServiceEndpoint(null, config);
         put(new UrlBuilder(getServicePath(name, version)).url(),
-                new FormBuilder().add("endpoint", endpoint).build(),
+                new FormBuilder().add("endpoint", gson.toJson(endpoint)).build(),
                 VoidResult.RESPONSE.class);
     }
 

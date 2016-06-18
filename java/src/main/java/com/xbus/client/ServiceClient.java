@@ -19,6 +19,8 @@ interface ServiceClient {
 
     long plugService(ServiceDesc desc, ServiceEndpoint endpoint, Integer ttl) throws XBusException;
 
+    long plugServices(ServiceDesc[] desces, ServiceEndpoint endpoint, Integer ttl) throws XBusException;
+
     void unplugService(String name, String version) throws XBusException;
 
     void keepAliveService(String name, String version) throws XBusException;
