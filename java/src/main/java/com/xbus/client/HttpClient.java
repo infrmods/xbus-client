@@ -17,6 +17,7 @@ import java.util.Random;
  * Created by lolynx on 6/11/16.
  */
 class HttpClient {
+    private static final GsonFactory GSON_FACTORY = new GsonFactory();
     private static Random random = new Random(System.currentTimeMillis());
 
     private HttpRequestFactory httpRequestFactory;
@@ -36,48 +37,50 @@ class HttpClient {
         }
     }
 
-    <T extends Result> T get(GenericUrl url, Class<? extends Response<T>> cls) throws XBusException {
-        Response<T> response;
+    private <T extends Result> T getResult(HttpRequest request, Class<? extends Response<T>> cls) throws XBusException, IOException {
         try {
-            HttpRequest request = httpRequestFactory.buildGetRequest(url);
-            response = request.execute().parseAs(cls);
+            return request.execute().parseAs(cls).getResult();
+        } catch (HttpResponseException e) {
+            if (e.getHeaders() != null && "application/json".equals(e.getHeaders().getContentType())) {
+                String content = e.getContent();
+                if (content != null && content.length() > 0) {
+                    return GSON_FACTORY.fromString(content, cls).getResult();
+                }
+            }
+            throw new XBusException(ErrorCode.IOError, e);
+        }
+    }
+
+    <T extends Result> T get(GenericUrl url, Class<? extends Response<T>> cls) throws XBusException {
+        try {
+            return getResult(httpRequestFactory.buildGetRequest(url), cls);
         } catch (IOException e) {
             throw new XBusException(ErrorCode.IOError, e);
         }
-        return response.getResult();
     }
 
     <T extends Result> T delete(GenericUrl url, Class<? extends Response<T>> cls) throws XBusException {
-        Response<T> response;
         try {
-            HttpRequest request = httpRequestFactory.buildDeleteRequest(url);
-            response = request.execute().parseAs(cls);
+            return getResult(httpRequestFactory.buildDeleteRequest(url), cls);
         } catch (IOException e) {
             throw new XBusException(ErrorCode.IOError, e);
         }
-        return response.getResult();
     }
 
     <T extends Result> T post(GenericUrl url, HttpContent content, Class<? extends Response<T>> cls) throws XBusException {
-        Response<T> response;
         try {
-            HttpRequest request = httpRequestFactory.buildPostRequest(url, content);
-            response = request.execute().parseAs(cls);
+            return getResult(httpRequestFactory.buildPostRequest(url, content), cls);
         } catch (IOException e) {
             throw new XBusException(ErrorCode.IOError, e);
         }
-        return response.getResult();
     }
 
     <T extends Result> T put(GenericUrl url, HttpContent content, Class<? extends Response<T>> cls) throws XBusException {
-        Response<T> response;
         try {
-            HttpRequest request = httpRequestFactory.buildPutRequest(url, content);
-            response = request.execute().parseAs(cls);
+            return getResult(httpRequestFactory.buildPutRequest(url, content), cls);
         } catch (IOException e) {
             throw new XBusException(ErrorCode.IOError, e);
         }
-        return response.getResult();
     }
 
     static class UrlFormBuilder {

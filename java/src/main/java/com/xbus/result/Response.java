@@ -10,7 +10,7 @@ import com.xbus.exceptions.XBusException;
 public class Response<T extends Result> {
     public static class Error {
         @Key
-        ErrorCode code;
+        String code;
 
         @Key
         String message;
@@ -30,7 +30,11 @@ public class Response<T extends Result> {
             return result;
         }
         if (error != null) {
-            throw XBusException.newException(error.code, error.message);
+            ErrorCode errorCode = ErrorCode.getErrorCode(error.code);
+            if (errorCode != null) {
+                throw XBusException.newException(errorCode, error.message);
+            }
+            throw XBusException.newException(ErrorCode.Unknown, "[" + error.code + "]: " + error.message);
         }
         throw XBusException.newException(ErrorCode.Unknown, "");
     }

@@ -1,6 +1,9 @@
 package com.xbus.exceptions;
 
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Created by lolynx on 6/11/16.
  */
@@ -26,7 +29,19 @@ public enum ErrorCode {
 
     public final String code;
 
+    private static final Map<String, ErrorCode> codes = new HashMap<String, ErrorCode>();
+
+    static {
+        for (ErrorCode code : ErrorCode.values()) {
+            codes.put(code.code, code);
+        }
+    }
+
     ErrorCode(String code) {
         this.code = code;
+    }
+
+    public static ErrorCode getErrorCode(String code) {
+        return codes.get(code);
     }
 }
