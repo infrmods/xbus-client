@@ -111,6 +111,8 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
                         .add("endpoint", gson.toJson(endpoint))
                         .addIfNotNull("ttl", ttl).build(),
                 PlugServiceResult.RESPONSE.class);
+        leaseIds.put(desc.getId(), result.leaseId);
+        addresses.put(desc.getId(), endpoint.address);
         return result.leaseId;
     }
 
@@ -122,15 +124,22 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
                         .add("endpoint", gson.toJson(endpoint))
                         .addIfNotNull("ttl", ttl).build(),
                 PlugServiceResult.RESPONSE.class);
+        for (ServiceDesc desc : desces) {
+            leaseIds.put(desc.getId(), result.leaseId);
+            addresses.put(desc.getId(), endpoint.address);
+        }
         return result.leaseId;
     }
 
     public void unplugService(String name, String version) throws XBusException {
-        String address = addresses.get(Service.genId(name, version));
+        String serviceId = Service.genId(name, version);
+        String address = addresses.get(serviceId);
         if (address == null) {
-            throw new RuntimeException("missing address for " + Service.genId(name, version));
+            throw new RuntimeException("missing address for " + serviceId);
         }
         delete(new UrlBuilder(getServicePath(name, version)).url(), VoidResult.RESPONSE.class);
+        leaseIds.remove(serviceId);
+        addresses.remove(serviceId);
     }
 
     public void revokeLease(long leaseId) throws XBusException {

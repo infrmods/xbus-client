@@ -117,11 +117,9 @@ class ServiceMix(object):
         self._service_revisions[name] = result['revision']
         return Service.from_dict(name, version, result['service'])
 
-    def plug_service(self, service, ttl='60s', lease_id=None):
-        if len(service.endpoints) != 1:
-            raise ValueError('endpoints\'s size must be 1')
+    def plug_service(self, service, endpoint, ttl='60s', lease_id=None):
         data = dict(desc=json.dumps(service.desc()),
-                    endpoint=json.dumps(service.endpoints[0].to_dict()))
+                    endpoint=json.dumps(endpoint.to_dict()))
         if ttl:
             data['ttl'] = ttl
         if lease_id:
@@ -129,7 +127,7 @@ class ServiceMix(object):
         result = self._request('POST', '/api/services/%s/%s' % (service.name, service.version),
                                data=data)
         self._lease_ids[service.key] = result['lease_id']
-        self._addrs[service.key] = service.endpoints[0].address
+        self._addrs[service.key] = endpoint
         return lease_id
 
     def plug_services(self, services, endpoint, ttl=None, lease_id=None):
@@ -139,7 +137,11 @@ class ServiceMix(object):
         if lease_id:
             data['lease_id'] = lease_id
         result = self._request('POST', '/api/services', data=data)
-        return result['lease_id']
+        lease_id = result['lease_id']
+        for service in services:
+            self._lease_ids[service.key] = lease_id
+            self._addrs[service.key] = endpoint.address
+        return lease_id
 
     def unplug_service(self, name, version):
         key = '%s:%s' % (name, version)
@@ -147,7 +149,8 @@ class ServiceMix(object):
         if addr is None:
             raise Exception('not plugged: %s' % key)
         self._request('DELETE', '/api/services/%s/%s/%s' % (name, version, addr))
-        del self._lease_ids['%s:%s' % (name, version)]
+        del self._lease_ids[key]
+        del self._addrs[key]
 
     def keepalive_service(self, name, version):
         key = '%s:%s' % (name, version)
