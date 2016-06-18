@@ -13,7 +13,7 @@ interface ServiceClient {
 
     Service watchService(String name, String version) throws XBusException;
 
-    Service watchService(String name, String version, String timeout) throws XBusException;
+    Service watchService(String name, String version, Integer timeout) throws XBusException;
 
     long plugService(ServiceDesc desc, ServiceEndpoint endpoint) throws XBusException;
 

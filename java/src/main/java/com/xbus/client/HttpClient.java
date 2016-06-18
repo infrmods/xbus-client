@@ -109,14 +109,14 @@ public class HttpClient {
     }
 
     class WatchUrlBuilder extends UrlBuilder {
-        WatchUrlBuilder(String path, Long currentRevision, String timeout) {
+        WatchUrlBuilder(String path, Long currentRevision, Integer timeout) {
             super(path);
             builder.addQueryParameter("watch", "true");
             if (currentRevision != null) {
                 builder.addQueryParameter("revision", String.valueOf(currentRevision + 1));
             }
             if (timeout != null) {
-                builder.addQueryParameter("timeout", timeout);
+                builder.addQueryParameter("timeout", timeout.toString());
             }
         }
     }

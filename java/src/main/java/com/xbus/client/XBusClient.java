@@ -55,7 +55,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         return watchConfig(name, null);
     }
 
-    public Config watchConfig(String name, String timeout) throws XBusException {
+    public Config watchConfig(String name, Integer timeout) throws XBusException {
         WatchConfigResult result;
         try {
             result = get(new WatchUrlBuilder(getConfigPath(name), configRevisions.get(name), timeout).url(),
@@ -82,7 +82,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         return watchService(name, version, null);
     }
 
-    public Service watchService(String name, String version, String timeout) throws XBusException {
+    public Service watchService(String name, String version, Integer timeout) throws XBusException {
         String id = Service.genId(name, version);
         Long revision = serviceRevisions.get(id);
         WatchServiceResult result;

@@ -15,5 +15,5 @@ interface ConfigClient {
 
     Config watchConfig(String name) throws XBusException;
 
-    Config watchConfig(String name, String timeout) throws XBusException;
+    Config watchConfig(String name, Integer timeout) throws XBusException;
 }

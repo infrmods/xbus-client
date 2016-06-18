@@ -52,7 +52,7 @@ public class ServiceSession {
         Long retLeaseId = client.plugService(desc, endpoint, ttl);
         if (leaseId == null ) {
             leaseId = retLeaseId;
-        } else if (retLeaseId != leaseId) {
+        } else if (!leaseId.equals(retLeaseId)) {
             throw XBusException.newException(ErrorCode.Unknown, "leaseId changed");
         }
     }

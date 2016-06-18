@@ -117,7 +117,7 @@ class ServiceMix(object):
         self._service_revisions[name] = result['revision']
         return Service.from_dict(name, version, result['service'])
 
-    def plug_service(self, service, ttl=None, lease_id=None):
+    def plug_service(self, service, ttl='60s', lease_id=None):
         if len(service.endpoints) != 1:
             raise ValueError('endpoints\'s size must be 1')
         data = dict(desc=json.dumps(service.desc()),
