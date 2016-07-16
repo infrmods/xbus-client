@@ -3,3 +3,4 @@ target
 *.class
 *.jar
 xbus-client.iml
+*.ks

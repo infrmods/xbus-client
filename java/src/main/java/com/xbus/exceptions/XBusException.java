@@ -1,5 +1,7 @@
 package com.xbus.exceptions;
 
+import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
+
 /**
  * Created by lolynx on 6/11/16.
  */
@@ -30,5 +32,9 @@ public class XBusException extends Exception {
             default:
                 return new XBusException(code, message);
         }
+    }
+
+    public String toString() {
+        return ReflectionToStringBuilder.toString(this);
     }
 }
