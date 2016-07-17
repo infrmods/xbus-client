@@ -38,6 +38,7 @@ public class ServiceSession {
                         // TODO log
                         e.printStackTrace();
                     }
+                    System.out.println("keepalived " + leaseId);
                     try {
                         Thread.sleep(sleepInterval * 1000);
                     } catch (InterruptedException e) {

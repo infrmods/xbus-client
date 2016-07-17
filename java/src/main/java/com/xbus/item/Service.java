@@ -9,10 +9,8 @@ public class Service extends ServiceDesc {
     public Service() {
     }
 
-    public Service(String name, String version, String type, ServiceEndpoint[] endpoints) {
-        super(type, null, null);
-        this.name = name;
-        this.version = version;
+    public Service(String name, String version, String type, String proto, ServiceEndpoint[] endpoints) {
+        super(name, version, type, proto);
         this.endpoints = endpoints;
     }
 }

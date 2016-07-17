@@ -105,7 +105,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public long plugService(ServiceDesc desc, ServiceEndpoint endpoint, Integer ttl) throws XBusException {
         PlugServiceResult result = post(
-                new UrlBuilder("/api/services").url(),
+                new UrlBuilder(getServicePath(desc.name, desc.version)).url(),
                 new FormBuilder()
                         .add("desc", gson.toJson(desc))
                         .add("endpoint", gson.toJson(endpoint))
@@ -156,13 +156,11 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         if (address == null) {
             throw new RuntimeException("missing address for " + id);
         }
-        Long keepId = leaseIds.get(id);
-        if (keepId == null) {
+        Long leaseId = leaseIds.get(id);
+        if (leaseId == null) {
             throw new RuntimeException("missing keep id for " + id);
         }
-        put(new UrlBuilder(getServicePath(name, version)).url(),
-                new FormBuilder().add("keep_id", keepId).build(),
-                VoidResult.RESPONSE.class);
+        keepAliveLease(leaseId);
     }
 
     public void updateServiceConfig(String name, String version, String config) throws XBusException {
@@ -171,8 +169,8 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         if (address == null) {
             throw new RuntimeException("missing address for " + id);
         }
-        Long keepId = leaseIds.get(id);
-        if (keepId == null) {
+        Long leaseId = leaseIds.get(id);
+        if (leaseId == null) {
             throw new RuntimeException("missing keep id for " + id);
         }
         ServiceEndpoint endpoint = new ServiceEndpoint(null, config);
@@ -183,5 +181,9 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public ServiceSession newServiceSession() {
         return new ServiceSession(this);
+    }
+
+    public ServiceSession newServiceSession(int ttl) {
+        return new ServiceSession(this, ttl);
     }
 }

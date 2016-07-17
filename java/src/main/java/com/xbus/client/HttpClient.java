@@ -67,6 +67,9 @@ public class HttpClient {
     }
 
     <T extends Result> T post(HttpUrl url, RequestBody requestBody, Class<? extends Response<T>> cls) throws XBusException {
+        if (requestBody == null) {
+            requestBody = RequestBody.create(null, new byte[0]);
+        }
         Request request = new Request.Builder().post(requestBody).url(url).build();
         return getResult(request, cls);
     }

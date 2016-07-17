@@ -36,7 +36,7 @@ class ConfigMix(object):
         self._config_revisions[name] = result['revision']
 
     def watch_config(self, name, revision=None, timeout=None):
-        params = {}
+        params = dict(watch='true')
         if revision is None:
             revision = self._cofig_revisions.get(name, 0)
             if revision:
@@ -83,7 +83,7 @@ class Service(object):
 
     @property
     def key(self):
-        return '%s:%s' % (self.name, self.version)
+        return self.name, self.version
 
     @classmethod
     def from_dict(Service, name, version, d):
@@ -103,21 +103,21 @@ class Service(object):
         return d
 
     def __repr__(self):
-        return '<Service: %s>' % self.key
+        return '<Service %s:%s>' % self.key
 
 
 class ServiceMix(object):
     def __init__(self):
-        self._service_revisions = LDict(True)
-        self._lease_ids = LDict()
-        self._addrs = LDict()
+        self._service_revisions = LDict(True, default=0, key_func=lambda x: '%s:%s' % x)
+        self._lease_ids = LDict(default=None, key_func=lambda x: '%s:%s' % x)
+        self._addrs = LDict(default=None, key_func=lambda x: '%s:%s' % x)
 
     def get_service(self, name, version):
         result = self._request('GET', '/api/services/%s/%s' % (name, version))
-        self._service_revisions[name] = result['revision']
+        self._service_revisions[name, version] = result['revision']
         return Service.from_dict(name, version, result['service'])
 
-    def plug_service(self, service, endpoint, ttl='60s', lease_id=None):
+    def plug_service(self, service, endpoint, ttl=None, lease_id=None):
         data = dict(desc=json.dumps(service.desc()),
                     endpoint=json.dumps(endpoint.to_dict()))
         if ttl:
@@ -126,9 +126,9 @@ class ServiceMix(object):
             data['lease_id'] = lease_id
         result = self._request('POST', '/api/services/%s/%s' % (service.name, service.version),
                                data=data)
-        self._lease_ids[service.key] = result['lease_id']
+        self._lease_ids[service.key] = lease_id = result['lease_id']
         self._addrs[service.key] = endpoint
-        return lease_id
+        return result
 
     def plug_services(self, services, endpoint, ttl=None, lease_id=None):
         data = dict(endpoint=endpoint, desces=[x.desc() for x in services])
@@ -141,43 +141,43 @@ class ServiceMix(object):
         for service in services:
             self._lease_ids[service.key] = lease_id
             self._addrs[service.key] = endpoint.address
-        return lease_id
+        return result
 
     def unplug_service(self, name, version):
-        key = '%s:%s' % (name, version)
-        addr = self._addrs.get(key, None)
+        addr = self._addrs[name, version]
         if addr is None:
-            raise Exception('not plugged: %s' % key)
+            raise Exception('not plugged: %s:%s' % (name, version))
         self._request('DELETE', '/api/services/%s/%s/%s' % (name, version, addr))
-        del self._lease_ids[key]
-        del self._addrs[key]
+        del self._lease_ids[name, version]
+        del self._addrs[name, version]
 
     def keepalive_service(self, name, version):
-        key = '%s:%s' % (name, version)
-        lease_id = self._lease_ids.get(key, None)
+        lease_id = self._lease_ids[name, version]
         if lease_id is None:
-            raise Exception('%s is not pulgged' % key)
+            raise Exception('%s:%s is not pulgged' % (name, version))
         self._request('POST', '/api/leases/%d' % lease_id)
 
     def update_service(self, service):
         if len(service.endpoints) != 1:
             raise ValueError('endpoints\'s size must be 1')
-        addr = self._addrs.get(service.key, None)
+        addr = self._addrs[service.key]
         if addr is None:
-            raise Exception('not plugged: %s' % service.key)
+            raise Exception('not plugged: %R' % service)
         data = dict(endpoint=json.dumps(service.endpoints[0].to_dict()))
         self._request('PUT',
                       '/api/services/%s/%s/%s' % (service.name, service.version, addr),
                       data=data)
 
     def watch_service(self, name, version, revision=None, timeout=None):
-        params = {}
+        params = dict(watch='true')
         if revision is None:
-            revision = self._service_revisions.get('%s:%s' % (name, version), 0)
+            revision = self._service_revisions[name, version]
             if revision:
                 revision += 1
         if revision:
             params['revision'] = revision
+        if timeout:
+            params['timeout'] = timeout
         while True:
             try:
                 result = self._request('GET', '/api/services/%s/%s' % (name, version),
@@ -186,11 +186,11 @@ class ServiceMix(object):
                 if timeout:
                     return
                 continue
-            self._service_revisions[name] = result['revision']
+            self._service_revisions[name, version] = result['revision']
             return Service.from_dict(name, version, result['service'])
 
     def service_session(self, ttl=None):
-        return ServiceSession(self=None)
+        return ServiceSession(self, ttl)
 
 
 class ServiceSession(object):
@@ -202,18 +202,21 @@ class ServiceSession(object):
     def _wrap_call(self, f, *argv, **kwargs):
         if self.lease_id is not None:
             kwargs['lease_id'] = self.lease_id
-            if f(*argv, **kwargs) != self.lease_id:
+            result = f(*argv, **kwargs)
+            if result['lease_id'] != self.lease_id:
                 raise Exception('new lease generated')
         else:
             if self.ttl is not None:
                 kwargs['ttl'] = self.ttl
-            self.lease_id = f(*argv, **kwargs)
+            result = f(*argv, **kwargs)
+            self.lease_id = result['lease_id']
+            self.ttl = result['ttl']
 
-    def plug_service(self, service):
-        self._wrap_call(self.client.plug_service, service)
+    def plug_service(self, service, endpoint, **kwargs):
+        self._wrap_call(self.client.plug_service, service, endpoint, **kwargs)
 
-    def plug_services(self, services):
-        self._wrap_call(self.client.plug_services, services)
+    def plug_services(self, services, endpoint, **kwargs):
+        self._wrap_call(self.client.plug_services, services, endpoint, **kwargs)
 
     def unplug_service(self, name, version):
         self.client.unplug_service(name, version)
@@ -245,7 +248,7 @@ class XBusClient(ConfigMix, ServiceMix):
         raise XBusError.new_error(result['error']['code'], result['error'].get('message', None))
 
     def revoke_lease(self, lease_id):
-        self._request('DELETE', '/api/services', params=dict(lease_id=lease_id))
+        self._request('DELETE', '/api/leases/%d' % lease_id)
 
     def keepalive_lease(self, lease_id):
         self._request('POST', '/api/leases/%d' % lease_id)

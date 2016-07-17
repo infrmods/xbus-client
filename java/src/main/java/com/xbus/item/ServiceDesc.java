@@ -19,10 +19,11 @@ public class ServiceDesc {
     public ServiceDesc() {
     }
 
-    public ServiceDesc(String type, String proto, String description) {
+    public ServiceDesc(String name, String version, String type, String proto) {
+        this.name = name;
+        this.version = version;
         this.type = type;
         this.proto = proto;
-        this.description = description;
     }
 
     public String getId() {
