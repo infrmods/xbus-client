@@ -1,4 +1,4 @@
-package com.xbus.exceptions;
+package com.github.infrmods.xbus.exceptions;
 
 import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
 

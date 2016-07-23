@@ -1,13 +1,13 @@
-package com.xbus.client;
+package com.github.infrmods.xbus.client;
 
-import com.xbus.exceptions.DeadlineExceededException;
-import com.xbus.exceptions.ErrorCode;
-import com.xbus.exceptions.XBusException;
-import com.xbus.item.Config;
-import com.xbus.item.Service;
-import com.xbus.item.ServiceDesc;
-import com.xbus.item.ServiceEndpoint;
-import com.xbus.result.*;
+import com.github.infrmods.xbus.exceptions.DeadlineExceededException;
+import com.github.infrmods.xbus.item.Config;
+import com.github.infrmods.xbus.item.Service;
+import com.github.infrmods.xbus.item.ServiceDesc;
+import com.github.infrmods.xbus.result.*;
+import com.github.infrmods.xbus.exceptions.ErrorCode;
+import com.github.infrmods.xbus.exceptions.XBusException;
+import com.github.infrmods.xbus.item.ServiceEndpoint;
 
 import java.util.concurrent.ConcurrentHashMap;
 

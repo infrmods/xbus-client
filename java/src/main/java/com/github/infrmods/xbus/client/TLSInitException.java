@@ -1,4 +1,4 @@
-package com.xbus.client;
+package com.github.infrmods.xbus.client;
 
 /**
  * Created by lolynx on 6/11/16.

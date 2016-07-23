@@ -1,4 +1,4 @@
-package com.xbus.result;
+package com.github.infrmods.xbus.result;
 
 /**
  * Created by lolynx on 6/14/16.

@@ -1,9 +1,9 @@
-package com.xbus.client;
+package com.github.infrmods.xbus.client;
 
-import com.xbus.exceptions.XBusException;
-import com.xbus.item.Service;
-import com.xbus.item.ServiceDesc;
-import com.xbus.item.ServiceEndpoint;
+import com.github.infrmods.xbus.item.ServiceDesc;
+import com.github.infrmods.xbus.exceptions.XBusException;
+import com.github.infrmods.xbus.item.Service;
+import com.github.infrmods.xbus.item.ServiceEndpoint;
 
 /**
  * Created by lolynx on 6/14/16.

@@ -1,6 +1,6 @@
-package com.xbus.result;
+package com.github.infrmods.xbus.result;
 
-import com.xbus.item.Config;
+import com.github.infrmods.xbus.item.Config;
 
 /**
  * Created by lolynx on 6/11/16.

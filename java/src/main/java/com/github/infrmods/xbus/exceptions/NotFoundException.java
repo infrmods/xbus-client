@@ -1,4 +1,4 @@
-package com.xbus.exceptions;
+package com.github.infrmods.xbus.exceptions;
 
 /**
  * Created by lolynx on 6/14/16.

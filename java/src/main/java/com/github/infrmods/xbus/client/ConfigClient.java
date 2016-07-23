@@ -1,7 +1,7 @@
-package com.xbus.client;
+package com.github.infrmods.xbus.client;
 
-import com.xbus.item.Config;
-import com.xbus.exceptions.XBusException;
+import com.github.infrmods.xbus.item.Config;
+import com.github.infrmods.xbus.exceptions.XBusException;
 
 /**
  * Created by lolynx on 6/11/16.

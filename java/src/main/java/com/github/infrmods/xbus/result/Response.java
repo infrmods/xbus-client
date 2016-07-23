@@ -1,7 +1,7 @@
-package com.xbus.result;
+package com.github.infrmods.xbus.result;
 
-import com.xbus.exceptions.ErrorCode;
-import com.xbus.exceptions.XBusException;
+import com.github.infrmods.xbus.exceptions.ErrorCode;
+import com.github.infrmods.xbus.exceptions.XBusException;
 
 /**
  * Created by lolynx on 6/11/16.

@@ -1,4 +1,4 @@
-package com.xbus.result;
+package com.github.infrmods.xbus.result;
 
 import com.google.gson.annotations.SerializedName;
 

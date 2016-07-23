@@ -1,4 +1,4 @@
-package com.xbus.exceptions;
+package com.github.infrmods.xbus.exceptions;
 
 
 import java.util.HashMap;

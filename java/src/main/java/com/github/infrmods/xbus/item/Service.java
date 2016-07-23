@@ -1,4 +1,4 @@
-package com.xbus.item;
+package com.github.infrmods.xbus.item;
 
 /**
  * Created by lolynx on 6/14/16.

@@ -1,10 +1,10 @@
-package com.xbus.client;
+package com.github.infrmods.xbus.client;
 
 import com.google.gson.Gson;
-import com.xbus.exceptions.ErrorCode;
-import com.xbus.exceptions.XBusException;
-import com.xbus.result.Response;
-import com.xbus.result.Result;
+import com.github.infrmods.xbus.exceptions.ErrorCode;
+import com.github.infrmods.xbus.exceptions.XBusException;
+import com.github.infrmods.xbus.result.Response;
+import com.github.infrmods.xbus.result.Result;
 import okhttp3.*;
 
 import javax.net.ssl.*;
