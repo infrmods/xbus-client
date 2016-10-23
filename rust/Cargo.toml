@@ -1,0 +1,16 @@
+[package]
+name = "xbus"
+version = "0.1.0"
+authors = ["lolynx <londevil@gmail.com>"]
+
+[dependencies]
+serde = "0.8.16"
+serde_derive = "0.8.16"
+serde_yaml = "0.5"
+serde_json = "0.8"
+hyper = "0.9.10"
+url = "1.0"
+
+[dependencies.openssl]
+version = "0.7"
+features = ["tlsv1_2"]
