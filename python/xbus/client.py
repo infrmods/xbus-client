@@ -23,6 +23,20 @@ class ConfigMix(object):
         self._config_revisions = LDict(True)
         super(ConfigMix, self).__init__()
 
+    def list_config(self, prefix='', skip=None, limit=None):
+        url = '/api/configs?prefix=%s' % prefix
+        if skip is not None:
+            url += '&skip=%d' % skip
+        if limit is not None:
+            url += '&limit=%s' % limit
+        result = self._request('GET', url)
+        return result['configs']
+
+    def get_configs(self, *keys):
+        url = '/api/configs?keys=%s' % json.dumps(keys)
+        result = self._request('GET', url)
+        return {item['name']: item for item in result['configs']}
+
     def get_config(self, name):
         result = self._request('GET', '/api/configs/%s' % name)
         self._config_revisions[name] = result['revision']
