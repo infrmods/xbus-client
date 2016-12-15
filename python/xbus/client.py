@@ -246,11 +246,11 @@ class ServiceSession(object):
 
 
 class XBusClient(ConfigMix, ServiceMix):
-    def __init__(self, endpoint, cert='appcert.pem', key='appkey.pem', verify='cacert.pem'):
+    def __init__(self, endpoint, cert='appcert.pem', key='appkey.pem', cacert='cacert.pem'):
         self.endpoint = endpoint
         self.cert = cert
         self.key = key
-        self.verify = verify
+        self.verify = cacert
         super(XBusClient, self).__init__()
 
     def _request(self, method, path, params=None, data=None):
