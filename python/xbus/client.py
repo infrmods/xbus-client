@@ -49,6 +49,9 @@ class ConfigMix(object):
         result = self._request('PUT', '/api/configs/%s' % name, data=data)
         self._config_revisions[name] = result['revision']
 
+    def del_config(self, name):
+        self._request('DELETE', '/api/configs/%s' % name)
+
     def watch_config(self, name, revision=None, timeout=None):
         params = dict(watch='true')
         if revision is None:
