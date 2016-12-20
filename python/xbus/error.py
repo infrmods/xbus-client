@@ -51,3 +51,11 @@ class DeadlineExceededError(SimpleError):
 
 class NotPermittedError(SimpleError):
     CODE = 'NOT_PERMITTED'
+
+
+class InvalidNameError(SimpleError):
+    CODE = 'INVALID_NAME'
+
+
+class InvalidValueError(SimpleError):
+    CODE = 'INVALID_VALUE'
