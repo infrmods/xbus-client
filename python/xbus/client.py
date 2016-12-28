@@ -18,6 +18,21 @@ class Config(object):
         return '<Config: %s, version: %d>' % (self.name, self.version)
 
 
+class Configs(object):
+    def __init__(self, total, configs, skip, limit):
+        self.total = total
+        self.configs = configs
+        self.skip = skip
+        self.limit = limit
+
+    def __len__(self):
+        return len(self.configs)
+
+    def __iter__(self):
+        for config in self.configs:
+            yield config
+
+
 class ConfigMix(object):
     def __init__(self):
         self._config_revisions = LDict(True)
@@ -30,7 +45,8 @@ class ConfigMix(object):
         if limit is not None:
             url += '&limit=%s' % limit
         result = self._request('GET', url)
-        return result['configs']
+        return Configs(result['total'], result['configs'],
+                       result['skip'], result['limit'])
 
     def get_configs(self, *keys):
         url = '/api/configs?keys=%s' % json.dumps(keys)
