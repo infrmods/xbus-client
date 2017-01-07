@@ -20,10 +20,13 @@
         <developer>
             <id>dj</id>
             <name>Jiong Du</name>
-            <email>londevil@gmail.com</email>
+            <email>jiongdu0.0@gmail.com</email>
             <timezone>Asia/Shanghai</timezone>
         </developer>
     </developers>
+    <properties>
+        <version>0.1.1</version>
+    </properties>
 
     <groupId>com.github.infrmods.xbus</groupId>
     <artifactId>xbus-client</artifactId>
@@ -52,7 +55,7 @@
         <profile>
             <id>snapshot</id>
             <properties>
-                <projectVersion>0.1-SNAPSHOT</projectVersion>
+                <projectVersion>${version}-SNAPSHOT</projectVersion>
             </properties>
             <distributionManagement>
                 <repository>
@@ -64,7 +67,7 @@
         <profile>
             <id>release</id>
             <properties>
-                <projectVersion>0.1</projectVersion>
+                <projectVersion>${version}</projectVersion>
             </properties>
             <distributionManagement>
                 <repository>

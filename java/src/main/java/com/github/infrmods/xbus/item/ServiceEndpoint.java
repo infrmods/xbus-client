@@ -18,6 +18,22 @@ public class ServiceEndpoint {
         this.config = config;
     }
 
+    public String getHost() {
+        String []parts = address.split(":");
+        if (parts.length > 1) {
+            return parts[parts.length - 2];
+        }
+        return address;
+    }
+
+    public Integer getPort() {
+        String []parts = address.split(":");
+        if (parts.length > 1) {
+            return Integer.valueOf(parts[parts.length - 1]);
+        }
+        return null;
+    }
+
     public String toString() {
         return ReflectionToStringBuilder.toString(this);
     }
