@@ -4,11 +4,14 @@ import com.github.infrmods.xbus.item.ServiceDesc;
 import com.github.infrmods.xbus.exceptions.ErrorCode;
 import com.github.infrmods.xbus.exceptions.XBusException;
 import com.github.infrmods.xbus.item.ServiceEndpoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by lolynx on 6/18/16.
  */
 public class ServiceSession {
+    Logger logger = LoggerFactory.getLogger(ServiceSession.class);
     public static final int MIN_TTL = 10;
     public static final int DEFAULT_TTL = 60;
     private XBusClient client;
@@ -28,15 +31,13 @@ public class ServiceSession {
         this.ttl = ttl;
 
         new Thread(new Runnable() {
-            @Override
             public void run() {
                 int sleepInterval = ttl - 5;
                 while (!stopFlag) {
                     try {
                         keepAlive();
                     } catch (XBusException e) {
-                        // TODO log
-                        e.printStackTrace();
+                        logger.error("keepalive fail: {}", e.getMessage());
                     }
                     System.out.println("keepalived " + leaseId);
                     try {

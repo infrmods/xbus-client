@@ -17,20 +17,19 @@ import java.util.concurrent.TimeUnit;
  * Created by lolynx on 6/18/16.
  */
 public class HttpClient {
-    private static final Random random = new Random();
     final Gson gson = new Gson();
     private OkHttpClient client;
-    XbusConfig config;
+    private XBusConfig config;
 
-    HttpClient(XbusConfig config) throws TLSInitException {
+    HttpClient(XBusConfig config) throws TLSInitException {
         this.config = config;
-        KeyStore keyStore = config.loadKeyStore();
+        KeyStore keyStore = config.getKeyStore();
         X509TrustManager trustManager = null;
         SSLContext sslContext;
 
         try {
             KeyManagerFactory kmFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmFactory.init(keyStore, config.keystorePassword.toCharArray());
+            kmFactory.init(keyStore, config.getKeystorePassword().toCharArray());
             KeyManager[] keyManagers = kmFactory.getKeyManagers();
             TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmFactory.init(keyStore);
@@ -52,7 +51,7 @@ public class HttpClient {
         client = new OkHttpClient.Builder()
                 .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
                 .connectionPool(new ConnectionPool())
-                .readTimeout(config.httpReadTimeout, TimeUnit.SECONDS)
+                .readTimeout(config.getHttpReadTimeout(), TimeUnit.SECONDS)
                 .build();
     }
 
@@ -94,7 +93,7 @@ public class HttpClient {
         HttpUrl.Builder builder;
 
         UrlBuilder(String path) {
-            XbusConfig.Endpoint endpoint = config.endpoints[random.nextInt(config.endpoints.length)];
+            XBusConfig.Endpoint endpoint = config.chooseEndpoint();
             builder = new HttpUrl.Builder().scheme("https").host(endpoint.host).encodedPath(path);
             if (endpoint.port != null) {
                 builder.port(endpoint.port);

@@ -28,7 +28,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         return "/api/services/" + name + "/" + version;
     }
 
-    public XBusClient(XbusConfig config) throws TLSInitException {
+    public XBusClient(XBusConfig config) throws TLSInitException {
         super(config);
     }
 
