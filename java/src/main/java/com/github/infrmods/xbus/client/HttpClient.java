@@ -10,6 +10,9 @@ import okhttp3.*;
 import javax.net.ssl.*;
 import java.io.IOException;
 import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+import java.util.Enumeration;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -23,29 +26,49 @@ public class HttpClient {
 
     HttpClient(XBusConfig config) throws TLSInitException {
         this.config = config;
-        KeyStore keyStore = config.getKeyStore();
-        X509TrustManager trustManager = null;
+        KeyManager[] keyManagers = null;
+        TrustManager[] trustManagers;
+        X509TrustManager trustManager;
         SSLContext sslContext;
 
+        KeyStore keyStore = config.getKeyStore();
         try {
-            KeyManagerFactory kmFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmFactory.init(keyStore, config.getKeystorePassword().toCharArray());
-            KeyManager[] keyManagers = kmFactory.getKeyManagers();
-            TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmFactory.init(keyStore);
-            TrustManager[] trustManagers = tmFactory.getTrustManagers();
-            for (TrustManager manager : trustManagers) {
-                if (manager instanceof X509TrustManager) {
-                    trustManager = (X509TrustManager) manager;
+            if (keyStore == null) {
+                trustManager = trustAllManager;
+                trustManagers = new TrustManager[]{trustAllManager};
+            } else {
+                char[] passwd = config.getKeystorePassword().toCharArray();
+                Enumeration<String> aliases = keyStore.aliases();
+                while (aliases.hasMoreElements()) {
+                    String alias = aliases.nextElement();
+                    if (keyStore.getKey(alias, passwd) != null) {
+                        if (config.getAppName() != null) {
+                            throw new TLSInitException("appName | keyCert duplicated");
+                        }
+                        KeyManagerFactory kmFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                        kmFactory.init(keyStore, passwd);
+                        keyManagers = kmFactory.getKeyManagers();
+                        break;
+                    }
+                }
+
+                TrustManagerFactory tmFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+                tmFactory.init(keyStore);
+                trustManagers = tmFactory.getTrustManagers();
+                trustManager = null;
+                for (TrustManager manager : trustManagers) {
+                    if (manager instanceof X509TrustManager) {
+                        trustManager = (X509TrustManager) manager;
+                    }
+                }
+                if (trustManager == null) {
+                    throw new TLSInitException("missing trust manager");
                 }
             }
             sslContext = SSLContext.getInstance("TLS");
             sslContext.init(keyManagers, trustManagers, null);
         } catch (Exception e) {
             throw new TLSInitException(e);
-        }
-        if (trustManager == null) {
-            throw new TLSInitException("missing trust manager");
         }
 
         client = new OkHttpClient.Builder()
@@ -56,12 +79,12 @@ public class HttpClient {
     }
 
     <T extends Result> T get(HttpUrl url, Class<? extends Response<T>> cls) throws XBusException {
-        Request request = new Request.Builder().get().url(url).build();
+        Request request = requestBuilder().get().url(url).build();
         return getResult(request, cls);
     }
 
     <T extends Result> T delete(HttpUrl url, Class<? extends Response<T>> cls) throws XBusException {
-        Request request = new Request.Builder().delete().url(url).build();
+        Request request = requestBuilder().delete().url(url).build();
         return getResult(request, cls);
     }
 
@@ -69,13 +92,21 @@ public class HttpClient {
         if (requestBody == null) {
             requestBody = RequestBody.create(null, new byte[0]);
         }
-        Request request = new Request.Builder().post(requestBody).url(url).build();
+        Request request = requestBuilder().post(requestBody).url(url).build();
         return getResult(request, cls);
     }
 
     <T extends Result> T put(HttpUrl url, RequestBody requestBody, Class<? extends Response<T>> cls) throws XBusException {
-        Request request = new Request.Builder().put(requestBody).url(url).build();
+        Request request = requestBuilder().put(requestBody).url(url).build();
         return getResult(request, cls);
+    }
+
+    private Request.Builder requestBuilder() {
+        Request.Builder builder = new Request.Builder();
+        if (config.getAppName() != null) {
+            builder.addHeader("DEV-APP", config.getAppName());
+        }
+        return builder;
     }
 
     private <T extends Result> T getResult(Request request, Class<? extends Response<T>> cls) throws XBusException {
@@ -93,7 +124,7 @@ public class HttpClient {
         HttpUrl.Builder builder;
 
         UrlBuilder(String path) {
-            XBusConfig.Endpoint endpoint = config.chooseEndpoint();
+            Endpoint endpoint = config.chooseEndpoint();
             builder = new HttpUrl.Builder().scheme("https").host(endpoint.host).encodedPath(path);
             if (endpoint.port != null) {
                 builder.port(endpoint.port);
@@ -146,4 +177,16 @@ public class HttpClient {
             return builder.build();
         }
     }
+
+    final X509TrustManager trustAllManager = new X509TrustManager() {
+        public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
+
+        public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+        }
+
+        public X509Certificate[] getAcceptedIssuers() {
+            return new X509Certificate[0];
+        }
+    };
 }

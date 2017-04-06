@@ -1,6 +1,10 @@
 package com.github.infrmods.xbus.client;
 
+import java.io.IOException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Random;
 
 /**
@@ -8,35 +12,9 @@ import java.util.Random;
  */
 public class XBusConfig {
     private Random random = new Random();
-    public static class Endpoint {
-        public String host;
-        public Integer port;
 
-        public Endpoint(String s) {
-            if (s.startsWith("https://")) {
-                s = s.substring("https://".length());
-            }
-            String[] parts = s.split(":", 2);
-            host = parts[0];
-            if (parts.length == 2) {
-                port = Integer.valueOf(parts[1]);
-            }
-        }
-
-        public static Endpoint[] convert(String endpoints[]) {
-            Endpoint[] result = new Endpoint[endpoints.length];
-            for (int i = 0; i< endpoints.length; i++) {
-                result[i] = new Endpoint(endpoints[i]);
-            }
-            return result;
-        }
-
-        public Endpoint(String host, Integer port) {
-            this.host = host;
-            this.port = port;
-        }
-    }
-
+    private String appName;
+    private boolean allowInsecure = false;
     private Endpoint[] endpoints;
     private KeyStore keyStore;
     private String keystorePassword;
@@ -56,12 +34,22 @@ public class XBusConfig {
 
     public XBusConfig(Endpoint[] endpoints, String cacertFile, String certFile, String keyFile) {
         this(endpoints, KeyTool.keyStoreFromPem(cacertFile, certFile, keyFile, ""), "");
+        this.keystorePassword = "";
     }
 
     public XBusConfig(Endpoint[] endpoints, KeyStore keyStore, String keystorePassword) {
         this.endpoints = endpoints;
         this.keyStore = keyStore;
         this.keystorePassword = keystorePassword;
+    }
+
+    public XBusConfig(String[] endpoints, String appName) {
+        this(Endpoint.convert(endpoints), appName);
+    }
+
+    public XBusConfig(Endpoint[] endpoints, String appName) {
+        this.endpoints = endpoints;
+        this.appName = appName;
     }
 
     public Endpoint chooseEndpoint() {
@@ -82,5 +70,25 @@ public class XBusConfig {
 
     public String getKeystorePassword() {
         return keystorePassword;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public boolean isAllowInsecure() {
+        return allowInsecure;
+    }
+
+    public void setAllowInsecure(boolean allowInsecure) {
+        this.allowInsecure = allowInsecure;
+    }
+
+    public void setKeyStore(KeyStore keyStore) {
+        this.keyStore = keyStore;
     }
 }

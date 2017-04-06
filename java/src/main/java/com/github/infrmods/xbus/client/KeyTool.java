@@ -52,11 +52,15 @@ public class KeyTool {
         try {
             KeyStore keyStore = KeyStore.getInstance("JKS");
             keyStore.load(null);
-            PrivateKey privateKey = KeyTool.loadPrivateKey(keyFile);
-            Certificate cert = KeyTool.loadCert(certFile);
-            Certificate cacert = KeyTool.loadCert(cacertFile);
-            keyStore.setKeyEntry("1", privateKey, password.toCharArray(), new Certificate[]{cert});
-            keyStore.setCertificateEntry("cacert", cacert);
+            if (cacertFile != null) {
+                Certificate cacert = KeyTool.loadCert(cacertFile);
+                keyStore.setCertificateEntry("cacert", cacert);
+            }
+            if (certFile != null && keyFile != null) {
+                PrivateKey privateKey = KeyTool.loadPrivateKey(keyFile);
+                Certificate cert = KeyTool.loadCert(certFile);
+                keyStore.setKeyEntry("1", privateKey, password.toCharArray(), new Certificate[]{cert});
+            }
             return keyStore;
         } catch (IOException e) {
             throw new TLSInitException(e);

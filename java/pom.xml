@@ -24,13 +24,10 @@
             <timezone>Asia/Shanghai</timezone>
         </developer>
     </developers>
-    <properties>
-        <version>0.1.1</version>
-    </properties>
 
     <groupId>com.github.infrmods.xbus</groupId>
     <artifactId>xbus-client</artifactId>
-    <version>${projectVersion}</version>
+    <version>0.1.2</version>
 
     <dependencies>
         <dependency>
@@ -65,9 +62,6 @@
     <profiles>
         <profile>
             <id>snapshot</id>
-            <properties>
-                <projectVersion>${version}-SNAPSHOT</projectVersion>
-            </properties>
             <distributionManagement>
                 <repository>
                     <id>oss</id>
@@ -77,9 +71,6 @@
         </profile>
         <profile>
             <id>release</id>
-            <properties>
-                <projectVersion>${version}</projectVersion>
-            </properties>
             <distributionManagement>
                 <repository>
                     <id>oss</id>
