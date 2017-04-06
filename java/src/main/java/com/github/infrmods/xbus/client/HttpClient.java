@@ -104,7 +104,7 @@ public class HttpClient {
     private Request.Builder requestBuilder() {
         Request.Builder builder = new Request.Builder();
         if (config.getAppName() != null) {
-            builder.addHeader("DEV-APP", config.getAppName());
+            builder.addHeader("Dev-App", config.getAppName());
         }
         return builder;
     }
