@@ -1,6 +1,9 @@
 import json
+import os
+
 import requests
-from .error import XBusError, DeadlineExceededError
+
+from .error import DeadlineExceededError, XBusError
 from .ldict import LDict
 
 
@@ -38,8 +41,8 @@ class ConfigMix(object):
         self._config_revisions = LDict(True)
         super(ConfigMix, self).__init__()
 
-    def list_config(self, prefix='', skip=None, limit=None):
-        url = '/api/configs?prefix=%s' % prefix
+    def list_config(self, tag='', prefix='', skip=None, limit=None):
+        url = '/api/configs?tag=%s&prefix=%s' % (tag, prefix)
         if skip is not None:
             url += '&skip=%d' % skip
         if limit is not None:
@@ -265,16 +268,27 @@ class ServiceSession(object):
 
 
 class XBusClient(ConfigMix, ServiceMix):
-    def __init__(self, endpoint, cert='appcert.pem', key='appkey.pem', cacert='cacert.pem'):
+    def __init__(self, endpoint, cert=None, key=None,
+                 dev_app=None, verify=None):
+        if not dev_app:
+            cert = cert or 'appcert.pem'
+            key = key or 'appkey.pem'
+        if verify is None and os.path.exists('cacert.pem'):
+            verify = 'cacert.pem'
         self.endpoint = endpoint
         self.cert = cert
         self.key = key
-        self.verify = cacert
+        self.verify = verify
+        self.dev_app = dev_app
         super(XBusClient, self).__init__()
 
     def _request(self, method, path, params=None, data=None):
+        headers = {}
+        if self.dev_app:
+            headers['Dev-App'] = self.dev_app
         rep = requests.request(method, self.endpoint + path, params=params, data=data,
-                               cert=(self.cert, self.key), verify=self.verify)
+                               cert=(self.cert, self.key), verify=self.verify,
+                               headers=headers)
         result = rep.json()
         if result['ok']:
             return result.get('result', None)
