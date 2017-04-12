@@ -8,17 +8,22 @@ from .ldict import LDict
 
 
 class Config(object):
-    def __init__(self, name, value, version):
+    def __init__(self, name, value, version, tag=None):
         self.name = name
         self.value = value
         self.version = version
+        self.tag = tag
 
     @classmethod
     def from_dict(Config, d):
-        return Config(d['name'], d['value'], d['version'])
+        return Config(d['name'], d['value'], d['version'], d.get('tag', None))
 
     def __repr__(self):
         return '<Config: %s, version: %d>' % (self.name, self.version)
+
+    def dump(self):
+        return dict(name=self.name, value=self.value,
+                    version=self.version, tag=self.tag)
 
 
 class Configs(object):
@@ -54,17 +59,19 @@ class ConfigMix(object):
     def get_configs(self, *keys):
         url = '/api/configs?keys=%s' % json.dumps(keys)
         result = self._request('GET', url)
-        return {item['name']: item for item in result['configs']}
+        return {item['name']: Config.from_dict(item) for item in result['configs']}
 
     def get_config(self, name):
         result = self._request('GET', '/api/configs/%s' % name)
         self._config_revisions[name] = result['revision']
         return Config.from_dict(result['config'])
 
-    def put_config(self, name, value, version=None):
+    def put_config(self, name, value, version=None, tag=None):
         data = dict(value=value)
         if version:
             data['version'] = version
+        if tag:
+            data['tag'] = tag
         result = self._request('PUT', '/api/configs/%s' % name, data=data)
         self._config_revisions[name] = result['revision']
 
