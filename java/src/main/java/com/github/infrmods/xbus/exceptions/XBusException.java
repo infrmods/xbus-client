@@ -11,12 +11,13 @@ public class XBusException extends Exception {
     public String message;
 
     XBusException(ErrorCode code, String message) {
+        super("[" + code + "] " + message);
         this.code = code;
         this.message = message;
     }
 
     public XBusException(ErrorCode code, Exception e) {
-        super(e);
+        super(code.name(), e);
         this.code = code;
         this.message = e.getMessage();
     }
