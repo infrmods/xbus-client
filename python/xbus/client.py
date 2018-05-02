@@ -155,6 +155,10 @@ class ServiceMix(object):
         self._lease_ids = LDict(default=None, key_func=lambda x: '%s:%s' % x)
         self._addrs = LDict(default=None, key_func=lambda x: '%s:%s' % x)
 
+    def get_versions(self, name):
+        result = self._request('GET', '/api/services/%s' % name)
+        return {k: Service.from_dict(name, k, v) for k, v in result['services'].items()}
+
     def get_service(self, name, version):
         result = self._request('GET', '/api/services/%s/%s' % (name, version))
         self._service_revisions[name, version] = result['revision']
