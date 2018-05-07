@@ -164,6 +164,10 @@ class ServiceMix(object):
         self._service_revisions[name, version] = result['revision']
         return Service.from_dict(name, version, result['service'])
 
+    def search_service(self, name, skip=0, limit=20):
+        result = self._request('GET', '/api/services?q=%s&skip=%d&limit=%d' % (name, skip, limit))
+        return result
+
     def plug_service(self, service, endpoint, ttl=None, lease_id=None):
         data = dict(desc=json.dumps(service.desc()),
                     endpoint=json.dumps(endpoint.to_dict()))
