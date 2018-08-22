@@ -59,3 +59,7 @@ class InvalidNameError(SimpleError):
 
 class InvalidValueError(SimpleError):
     CODE = 'INVALID_VALUE'
+
+
+class NameDuplicatedError(SimpleError):
+    CODE = 'NAME_DUPLICATED'

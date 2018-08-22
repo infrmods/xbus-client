@@ -282,7 +282,22 @@ class ServiceSession(object):
             self.lease_id = None
 
 
-class XBusClient(ConfigMix, ServiceMix):
+class AppMix(object):
+    def list_app(self, skip=None, limit=20):
+        params = {'limit': limit}
+        if skip is not None:
+            params['skip'] = skip
+        result = self._request('GET', '/api/apps', params=params)
+        return result
+
+    def add_app(self, name, description, key_bits=2048, days=3650):
+        data = dict(name=name, description=description,
+                    key_bits=key_bits, days=days)
+        result = self._request('PUT', '/api/apps', data=data)
+        return result
+
+
+class XBusClient(ConfigMix, ServiceMix, AppMix):
     def __init__(self, endpoint, cert=None, key=None,
                  dev_app=None, verify=None):
         if not dev_app:
