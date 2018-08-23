@@ -66,12 +66,14 @@ class ConfigMix(object):
         self._config_revisions[name] = result['revision']
         return Config.from_dict(result['config'])
 
-    def put_config(self, name, value, version=None, tag=None):
+    def put_config(self, name, value, version=None, tag=None, remark=None):
         data = dict(value=value)
         if version:
             data['version'] = version
         if tag:
             data['tag'] = tag
+        if remark:
+            data['remark'] = remark
         result = self._request('PUT', '/api/configs/%s' % name, data=data)
         self._config_revisions[name] = result['revision']
 
