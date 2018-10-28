@@ -10,7 +10,7 @@ public class XBusException extends Exception {
 
     public String message;
 
-    XBusException(ErrorCode code, String message) {
+    public XBusException(ErrorCode code, String message) {
         super("[" + code + "] " + message);
         this.code = code;
         this.message = message;

@@ -1,88 +1,122 @@
 package com.github.infrmods.xbus.client;
 
-import com.github.infrmods.xbus.item.ServiceDesc;
 import com.github.infrmods.xbus.exceptions.ErrorCode;
 import com.github.infrmods.xbus.exceptions.XBusException;
+import com.github.infrmods.xbus.item.Service;
+import com.github.infrmods.xbus.item.ServiceDesc;
 import com.github.infrmods.xbus.item.ServiceEndpoint;
+import com.github.infrmods.xbus.result.LeaseGrantResult;
+import com.github.infrmods.xbus.result.PlugServiceResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Created by lolynx on 6/18/16.
- */
+import java.util.concurrent.ConcurrentHashMap;
+
 public class ServiceSession {
-    Logger logger = LoggerFactory.getLogger(ServiceSession.class);
     public static final int MIN_TTL = 10;
-    public static final int DEFAULT_TTL = 60;
+    private static Logger logger = LoggerFactory.getLogger(ServiceSession.class);
+
     private XBusClient client;
+    private ServiceEndpoint endpoint;
     private int ttl;
-    private Long leaseId = null;
-    private volatile boolean stopFlag = false;
+    private volatile Long leaseId = null;
+    private volatile boolean closed = false;
+    private ConcurrentHashMap<String, ServiceDesc> services = new ConcurrentHashMap<String, ServiceDesc>();
 
-    public ServiceSession(XBusClient client) {
-        this(client, DEFAULT_TTL);
-    }
-
-    public ServiceSession(final XBusClient client, final int ttl) {
+    ServiceSession(XBusClient client, ServiceEndpoint endpoint, int ttl) throws XBusException {
         if (ttl < MIN_TTL) {
-            throw new RuntimeException("ttl too small: " + ttl);
+            throw new XBusException(ErrorCode.InvalidParam, "invalid ttl");
         }
         this.client = client;
+        this.endpoint = endpoint;
         this.ttl = ttl;
+        new Thread(keepTask).start();
+    }
 
-        new Thread(new Runnable() {
-            public void run() {
-                int sleepInterval = ttl - 5;
-                while (!stopFlag) {
-                    try {
-                        keepAlive();
-                    } catch (XBusException e) {
-                        logger.error("keepalive fail: {}", e.getMessage());
-                    }
-                    System.out.println("keepalived " + leaseId);
-                    try {
-                        Thread.sleep(sleepInterval * 1000);
-                    } catch (InterruptedException e) {
-                        return;
-                    }
-                }
+    public void plug(ServiceDesc desc) {
+        synchronized (this) {
+            services.put(desc.getId(), desc);
+            if (leaseId == null) {
+                return;
             }
-        }).start();
-    }
-
-    public void plugService(ServiceDesc desc, ServiceEndpoint endpoint) throws XBusException {
-        Long retLeaseId = client.plugService(desc, endpoint, ttl);
-        if (leaseId == null ) {
-            leaseId = retLeaseId;
-        } else if (!leaseId.equals(retLeaseId)) {
-            throw XBusException.newException(ErrorCode.Unknown, "leaseId changed");
+        }
+        try {
+            client.plugWithLease(leaseId, desc, endpoint);
+        } catch (XBusException e) {
+            logger.error("plug service fail", e);
         }
     }
 
-    public void plugServices(ServiceDesc[] desces, ServiceEndpoint endpoint) throws XBusException {
-        Long retLeaseId = client.plugServices(desces, endpoint, ttl);
-        if (leaseId == null ) {
-            leaseId = retLeaseId;
-        } else if (!leaseId.equals(retLeaseId)) {
-            throw XBusException.newException(ErrorCode.Unknown, "leaseId changed");
+    public void plugAll(ServiceDesc[] desces) {
+        synchronized (this) {
+            for (ServiceDesc desc : desces) {
+                services.put(desc.getId(), desc);
+            }
+            if (leaseId == null) {
+                return;
+            }
+        }
+        try {
+            client.plugAllWithLease(leaseId, ttl, desces, endpoint);
+        } catch (XBusException e) {
+            logger.error("plug services fail", e);
         }
     }
 
-    public void unplugService(String name, String version) throws XBusException {
+    public void unplug(String name, String version) throws XBusException {
+        services.remove(Service.genId(name, version));
         client.unplugService(name, version);
     }
 
-    public void keepAlive() throws XBusException {
+    public void close() throws XBusException {
+        closed = true;
         if (leaseId != null) {
-            client.keepAliveLease(leaseId);
+            client.revokeLease(leaseId);
         }
     }
 
-    public void close() throws XBusException {
-        stopFlag = true;
-        if (leaseId != null) {
-            client.revokeLease(leaseId);
-            leaseId = null;
+    private Runnable keepTask = new Runnable() {
+        private void keep() throws XBusException {
+            if (leaseId != null) {
+                try {
+                    client.keepAliveLease(leaseId);
+                    return;
+                } catch (XBusException e) {
+                    if (!e.code.equals(ErrorCode.NotFound)) {
+                        throw e;
+                    }
+                    leaseId = null;
+                }
+            }
+
+            LeaseGrantResult result = client.grantLease(ttl);
+            ServiceDesc[] desces;
+            synchronized (ServiceSession.this) {
+                leaseId = result.leaseId;
+                desces = services.values().toArray(new ServiceDesc[0]);
+            }
+            PlugServiceResult r = client.plugAllWithLease(leaseId, null, desces, endpoint);
         }
-    }
+
+        public void run() {
+            int interval = (int) (ttl * 0.8);
+            if (ttl - interval > 10) {
+                interval = ttl - 10;
+            }
+
+            while (!closed) {
+                try {
+                    keep();
+                } catch (Throwable t) {
+                    logger.error("keep fail", t);
+                }
+                try {
+                    Thread.sleep(interval * 1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    return;
+                }
+            }
+        }
+    };
 }

@@ -99,6 +99,33 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         return result.service;
     }
 
+    PlugServiceResult plugWithLease(long leaseId, ServiceDesc desc, ServiceEndpoint endpoint) throws XBusException {
+        PlugServiceResult result = post(
+                new UrlBuilder(getServicePath(desc.name, desc.version)).url(),
+                new FormBuilder()
+                        .add("desc", gson.toJson(desc))
+                        .add("endpoint", gson.toJson(endpoint))
+                        .add("lease_id", leaseId).build(),
+                PlugServiceResult.RESPONSE.class);
+        addresses.put(desc.getId(), endpoint.address);
+        return result;
+    }
+
+    PlugServiceResult plugAllWithLease(Long leaseId, Integer ttl, ServiceDesc[] desces, ServiceEndpoint endpoint) throws XBusException {
+        PlugServiceResult result = post(
+                new UrlBuilder("/api/services").url(),
+                new FormBuilder()
+                        .add("desces", gson.toJson(desces))
+                        .add("endpoint", gson.toJson(endpoint))
+                        .addIfNotNull("lease_id", leaseId)
+                        .addIfNotNull("ttl", ttl).build(),
+                PlugServiceResult.RESPONSE.class);
+        for (ServiceDesc desc : desces) {
+            addresses.put(desc.getId(), endpoint.address);
+        }
+        return result;
+    }
+
     public long plugService(ServiceDesc desc, ServiceEndpoint endpoint) throws XBusException {
         return plugService(desc, endpoint, null);
     }
@@ -133,13 +160,14 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public void unplugService(String name, String version) throws XBusException {
         String serviceId = Service.genId(name, version);
-        String address = addresses.get(serviceId);
-        if (address == null) {
-            throw new RuntimeException("missing address for " + serviceId);
-        }
-        delete(new UrlBuilder(getServicePath(name, version)).url(), VoidResult.RESPONSE.class);
         leaseIds.remove(serviceId);
         addresses.remove(serviceId);
+        delete(new UrlBuilder(getServicePath(name, version)).url(), VoidResult.RESPONSE.class);
+    }
+
+    public LeaseGrantResult grantLease(Integer ttl) throws XBusException {
+        LeaseGrantResult result = post(new UrlBuilder("/api/leases").url(), null, LeaseGrantResult.RESPONSE.class);
+        return result;
     }
 
     public void revokeLease(long leaseId) throws XBusException {
@@ -179,11 +207,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
                 VoidResult.RESPONSE.class);
     }
 
-    public ServiceSession newServiceSession() {
-        return new ServiceSession(this);
-    }
-
-    public ServiceSession newServiceSession(int ttl) {
-        return new ServiceSession(this, ttl);
+    public ServiceSession newServiceSession(ServiceEndpoint endpoint, int ttl) throws XBusException {
+        return new ServiceSession(this, endpoint, ttl);
     }
 }
