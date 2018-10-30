@@ -57,7 +57,7 @@ public class ServiceSession {
             }
         }
         try {
-            client.plugAllWithLease(leaseId, ttl, desces, endpoint);
+            client.plugAllWithLease(leaseId, null, desces, endpoint);
         } catch (XBusException e) {
             logger.error("plug services fail", e);
         }

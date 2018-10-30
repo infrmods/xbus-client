@@ -166,7 +166,10 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
     }
 
     public LeaseGrantResult grantLease(Integer ttl) throws XBusException {
-        LeaseGrantResult result = post(new UrlBuilder("/api/leases").url(), null, LeaseGrantResult.RESPONSE.class);
+        LeaseGrantResult result = post(
+                new UrlBuilder("/api/leases").url(),
+                new FormBuilder().add("ttl", ttl).build(),
+                LeaseGrantResult.RESPONSE.class);
         return result;
     }
 
