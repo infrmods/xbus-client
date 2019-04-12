@@ -303,8 +303,10 @@ class XBusClient(ConfigMix, ServiceMix, AppMix):
     def __init__(self, endpoint, cert=None, key=None,
                  dev_app=None, verify=None):
         if not dev_app:
-            cert = cert or 'appcert.pem'
-            key = key or 'appkey.pem'
+            if key is None and cert is None:
+                app_name = os.environ.get('APP_NAME', None)
+                if app_name:
+                    dev_app = app_name
         if verify is None and os.path.exists('cacert.pem'):
             verify = 'cacert.pem'
         self.endpoint = endpoint
