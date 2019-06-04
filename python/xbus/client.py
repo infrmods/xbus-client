@@ -22,8 +22,10 @@ class Config(object):
         return '<Config: %s, version: %d>' % (self.name, self.version)
 
     def dump(self):
-        return dict(name=self.name, value=self.value,
-                    version=self.version, tag=self.tag)
+        return dict(name=self.name,
+                    value=self.value,
+                    version=self.version,
+                    tag=self.tag)
 
 
 class Configs(object):
@@ -53,13 +55,16 @@ class ConfigMix(object):
         if limit is not None:
             url += '&limit=%s' % limit
         result = self._request('GET', url)
-        return Configs(result['total'], result['configs'],
-                       result['skip'], result['limit'])
+        return Configs(result['total'], result['configs'], result['skip'],
+                       result['limit'])
 
     def get_configs(self, *keys):
         url = '/api/configs?keys=%s' % json.dumps(keys)
         result = self._request('GET', url)
-        return {item['name']: Config.from_dict(item) for item in result['configs']}
+        return {
+            item['name']: Config.from_dict(item)
+            for item in result['configs']
+        }
 
     def get_config(self, name):
         result = self._request('GET', '/api/configs/%s' % name)
@@ -93,7 +98,9 @@ class ConfigMix(object):
 
         while True:
             try:
-                result = self._request('GET', '/api/configs/%s' % name, params=params)
+                result = self._request('GET',
+                                       '/api/configs/%s' % name,
+                                       params=params)
             except DeadlineExceededError:
                 if timeout:
                     return
@@ -103,11 +110,11 @@ class ConfigMix(object):
 
 
 class ServiceEndpoint(object):
-    def __init__(self, addr, config):
-        self.address = addr
+    def __init__(self, address, config):
+        self.address = address
         self.config = config
 
-    def to_dict(self):
+    def dump(self):
         d = dict(address=self.address)
         if self.config:
             d['config'] = self.config
@@ -117,114 +124,103 @@ class ServiceEndpoint(object):
         return '<ServiceEndpoint: %s>' % self.address
 
 
-class Service(object):
-    def __init__(self, name, version, typ, proto=None, description=None, endpoints=None):
-        self.name = name
-        self.version = version
-        self.type = typ
+class ZoneService(object):
+    def __init__(self,
+                 service,
+                 type,
+                 zone='default',
+                 proto=None,
+                 description=None,
+                 endpoints=None):
+        self.service = service
+        self.type = type
+        self.zone = zone
         self.proto = proto
         self.description = description
-        self.endpoints = endpoints or []
+        self.endpoints = []
+        if endpoints:
+            for endpoint in endpoints:
+                if isinstance(endpoint, ServiceEndpoint):
+                    self.endpoints.append(endpoint)
+                else:
+                    self.endpoints.append(ServiceEndpoint(**endpoint))
 
-    @property
-    def key(self):
-        return self.name, self.version
+    def dump(self):
+        return dict(service=self.service,
+                    type=self.type,
+                    proto=self.proto,
+                    description=self.description,
+                    endpoints=[e.dump() for e in self.endpoints])
 
-    @classmethod
-    def from_dict(Service, name, version, d):
-        if name != d['name'] or version != d['version']:
-            raise Exception('invalid service: %r' % d)
-        endpoints = [ServiceEndpoint(x['address'], x.get('config', None)) for x in d['endpoints']]
-        return Service(name, version, d['type'],
-                       d.get('proto', None), d.get('description', None),
-                       endpoints)
 
-    def desc(self):
-        d = dict(name=self.name, version=self.version, type=self.type)
-        if self.proto:
-            d['proto'] = self.proto
-        if self.description:
-            d['description'] = self.description
-        return d
+class Service(object):
+    def __init__(self, zones=None):
+        self.zones = {}
+        if zones:
+            for zone, service in zones.items():
+                if isinstance(service, ZoneService):
+                    self.zones[zone] = service
+                else:
+                    self.zones[zone] = ZoneService(**service)
 
-    def __repr__(self):
-        return '<Service %s:%s>' % self.key
+    def dump(self):
+        return {'zones': {k: v.dump() for k, v in self.zones.items()}}
 
 
 class ServiceMix(object):
     def __init__(self):
-        self._service_revisions = LDict(True, default=0, key_func=lambda x: '%s:%s' % x)
-        self._lease_ids = LDict(default=None, key_func=lambda x: '%s:%s' % x)
-        self._addrs = LDict(default=None, key_func=lambda x: '%s:%s' % x)
+        self._service_revisions = LDict(True, default=0)
+        self._lease_ids = LDict(default=None)
 
-    def get_versions(self, name):
-        result = self._request('GET', '/api/services/%s' % name)
-        return {k: Service.from_dict(name, k, v) for k, v in result['services'].items()}
-
-    def get_service(self, name, version):
-        result = self._request('GET', '/api/services/%s/%s' % (name, version))
-        self._service_revisions[name, version] = result['revision']
-        return Service.from_dict(name, version, result['service'])
+    def get_service(self, service):
+        result = self._request('GET', '/api/v1/services/%s' % service)
+        self._service_revisions[service] = result['revision']
+        return Service(**result['service'])
 
     def search_service(self, name, skip=0, limit=20):
-        result = self._request('GET', '/api/services?q=%s&skip=%d&limit=%d' % (name, skip, limit))
+        result = self._request(
+            'GET',
+            '/api/v1/services?q=%s&skip=%d&limit=%d' % (name, skip, limit))
         return result
 
     def plug_service(self, service, endpoint, ttl=None, lease_id=None):
-        data = dict(desc=json.dumps(service.desc()),
-                    endpoint=json.dumps(endpoint.to_dict()))
+        assert isinstance(service, ZoneService)
+        data = dict(desc=json.dumps(service.dump()),
+                    endpoint=json.dumps(endpoint.dump()))
         if ttl:
             data['ttl'] = ttl
         if lease_id:
             data['lease_id'] = lease_id
-        result = self._request('POST', '/api/services/%s/%s' % (service.name, service.version),
+        result = self._request('POST',
+                               '/api/v1/services/%s' % service.service,
                                data=data)
-        self._lease_ids[service.key] = lease_id = result['lease_id']
-        self._addrs[service.key] = endpoint
+        self._lease_ids[service.service] = lease_id = result['lease_id']
         return result
 
     def plug_services(self, services, endpoint, ttl=None, lease_id=None):
-        data = dict(endpoint=endpoint, desces=[x.desc() for x in services])
+        for service in services:
+            assert isinstance(service, ZoneService)
+        data = dict(endpoint=endpoint, desces=[x.dump() for x in services])
         if ttl:
             data['ttl'] = ttl
         if lease_id:
             data['lease_id'] = lease_id
-        result = self._request('POST', '/api/services', data=data)
+        result = self._request('POST', '/api/v1/services', data=data)
         lease_id = result['lease_id']
         for service in services:
-            self._lease_ids[service.key] = lease_id
-            self._addrs[service.key] = endpoint.address
+            self._lease_ids[service.service] = lease_id
         return result
 
-    def unplug_service(self, name, version):
-        addr = self._addrs[name, version]
-        if addr is None:
-            raise Exception('not plugged: %s:%s' % (name, version))
-        self._request('DELETE', '/api/services/%s/%s/%s' % (name, version, addr))
-        del self._lease_ids[name, version]
-        del self._addrs[name, version]
-
-    def keepalive_service(self, name, version):
-        lease_id = self._lease_ids[name, version]
+    def keepalive_service(self, service):
+        lease_id = self._lease_ids[service]
         if lease_id is None:
-            raise Exception('%s:%s is not pulgged' % (name, version))
+            raise Exception('%s is not pulgged' % service)
         self._request('POST', '/api/leases/%d' % lease_id)
 
-    def update_service(self, service):
-        if len(service.endpoints) != 1:
-            raise ValueError('endpoints\'s size must be 1')
-        addr = self._addrs[service.key]
-        if addr is None:
-            raise Exception('not plugged: %R' % service)
-        data = dict(endpoint=json.dumps(service.endpoints[0].to_dict()))
-        self._request('PUT',
-                      '/api/services/%s/%s/%s' % (service.name, service.version, addr),
-                      data=data)
-
-    def watch_service(self, name, version, revision=None, timeout=None):
+    def watch_service(self, service, revision=None, timeout=None):
         params = dict(watch='true')
         if revision is None:
-            revision = self._service_revisions[name, version]
+            revision = self._service_revisions[service]
             if revision:
                 revision += 1
         if revision:
@@ -233,14 +229,15 @@ class ServiceMix(object):
             params['timeout'] = timeout
         while True:
             try:
-                result = self._request('GET', '/api/services/%s/%s' % (name, version),
+                result = self._request('GET',
+                                       '/api/v1/services/%s' % service,
                                        params=params)
             except DeadlineExceededError:
                 if timeout:
                     return
                 continue
-            self._service_revisions[name, version] = result['revision']
-            return Service.from_dict(name, version, result['service'])
+            self._service_revisions[service] = result['revision']
+            return Service.from_dict(service, result['service'])
 
     def service_session(self, ttl=None):
         return ServiceSession(self, ttl)
@@ -269,10 +266,8 @@ class ServiceSession(object):
         self._wrap_call(self.client.plug_service, service, endpoint, **kwargs)
 
     def plug_services(self, services, endpoint, **kwargs):
-        self._wrap_call(self.client.plug_services, services, endpoint, **kwargs)
-
-    def unplug_service(self, name, version):
-        self.client.unplug_service(name, version)
+        self._wrap_call(self.client.plug_services, services, endpoint,
+                        **kwargs)
 
     def keepalive(self):
         if self.lease_id is not None:
@@ -293,15 +288,21 @@ class AppMix(object):
         return result
 
     def add_app(self, name, description, key_bits=2048, days=3650):
-        data = dict(name=name, description=description,
-                    key_bits=key_bits, days=days)
+        data = dict(name=name,
+                    description=description,
+                    key_bits=key_bits,
+                    days=days)
         result = self._request('PUT', '/api/apps', data=data)
         return result
 
 
 class XBusClient(ConfigMix, ServiceMix, AppMix):
-    def __init__(self, endpoint, cert=None, key=None,
-                 dev_app=None, verify=None):
+    def __init__(self,
+                 endpoint,
+                 cert=None,
+                 key=None,
+                 dev_app=None,
+                 verify=None):
         if not dev_app:
             if key is None and cert is None:
                 app_name = os.environ.get('APP_NAME', None)
@@ -320,13 +321,18 @@ class XBusClient(ConfigMix, ServiceMix, AppMix):
         headers = {}
         if self.dev_app:
             headers['Dev-App'] = self.dev_app
-        rep = requests.request(method, self.endpoint + path, params=params, data=data,
-                               cert=(self.cert, self.key), verify=self.verify,
+        rep = requests.request(method,
+                               self.endpoint + path,
+                               params=params,
+                               data=data,
+                               cert=(self.cert, self.key),
+                               verify=self.verify,
                                headers=headers)
         result = rep.json()
         if result['ok']:
             return result.get('result', None)
-        raise XBusError.new_error(result['error']['code'], result['error'].get('message', None))
+        raise XBusError.new_error(result['error']['code'],
+                                  result['error'].get('message', None))
 
     def revoke_lease(self, lease_id):
         self._request('DELETE', '/api/leases/%d' % lease_id)
