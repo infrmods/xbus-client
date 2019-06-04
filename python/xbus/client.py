@@ -110,7 +110,7 @@ class ConfigMix(object):
 
 
 class ServiceEndpoint(object):
-    def __init__(self, address, config):
+    def __init__(self, address, config=None):
         self.address = address
         self.config = config
 
