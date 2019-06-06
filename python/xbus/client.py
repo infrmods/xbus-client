@@ -154,7 +154,8 @@ class ZoneService(object):
 
 
 class Service(object):
-    def __init__(self, zones=None):
+    def __init__(self, service, zones=None):
+        self.service = service
         self.zones = {}
         if zones:
             for zone, service in zones.items():
@@ -164,7 +165,7 @@ class Service(object):
                     self.zones[zone] = ZoneService(**service)
 
     def dump(self):
-        return {'zones': {k: v.dump() for k, v in self.zones.items()}}
+        return {'service': self.service, 'zones': {k: v.dump() for k, v in self.zones.items()}}
 
 
 class ServiceMix(object):

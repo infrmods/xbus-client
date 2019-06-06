@@ -8,7 +8,7 @@ with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as f:
 
 
 setup(name='xbus',
-      version='0.1.10',
+      version='0.1.11',
       description='python client for xbus',
       author='Jiong Du',
       author_email='londevil@gmail.com',
