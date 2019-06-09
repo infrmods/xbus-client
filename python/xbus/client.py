@@ -165,7 +165,11 @@ class Service(object):
                     self.zones[zone] = ZoneService(**service)
 
     def dump(self):
-        return {'service': self.service, 'zones': {k: v.dump() for k, v in self.zones.items()}}
+        return {
+            'service': self.service,
+            'zones': {k: v.dump()
+                      for k, v in self.zones.items()}
+        }
 
 
 class ServiceMix(object):
@@ -197,6 +201,12 @@ class ServiceMix(object):
                                data=data)
         self._lease_ids[service.service] = lease_id = result['lease_id']
         return result
+
+    def delete_service(self, service, zone=None):
+        self._request('DELETE',
+                      '/api/v1/services/%s?zone=%s' % (service, zone or ''))
+        self._service_revisions.pop(service, None)
+        self._lease_ids.pop(service, None)
 
     def plug_services(self, services, endpoint, ttl=None, lease_id=None):
         for service in services:

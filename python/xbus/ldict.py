@@ -1,7 +1,6 @@
 from threading import Lock
 
-
-_None = type('_None', (object,), {})()
+_None = type('_None', (object, ), {})()
 
 
 class LDict(object):
@@ -41,6 +40,12 @@ class LDict(object):
             key = self.key_func(key)
         with self._lk:
             del self.values[key]
+
+    def pop(self, key, d=None):
+        if self.key_func is not None:
+            key = self.key_func(key)
+        with self._lk:
+            return self.values.pop(key, d)
 
     def __contains__(self, key):
         if self.key_func is not None:
