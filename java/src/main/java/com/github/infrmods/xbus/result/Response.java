@@ -13,11 +13,11 @@ public class Response<T extends Result> {
         String message;
     }
 
-    public boolean ok;
+    private boolean ok;
 
-    public T result;
+    private T result;
 
-    public Error error;
+    private Error error;
 
     public T getResult() throws XBusException {
         if (ok) {
@@ -31,5 +31,25 @@ public class Response<T extends Result> {
             throw XBusException.newException(ErrorCode.Unknown, "[" + error.code + "]: " + error.message);
         }
         throw XBusException.newException(ErrorCode.Unknown, "");
+    }
+
+    public boolean isOk() {
+        return ok;
+    }
+
+    public void setOk(boolean ok) {
+        this.ok = ok;
+    }
+
+    public void setResult(T result) {
+        this.result = result;
+    }
+
+    public Error getError() {
+        return error;
+    }
+
+    public void setError(Error error) {
+        this.error = error;
     }
 }

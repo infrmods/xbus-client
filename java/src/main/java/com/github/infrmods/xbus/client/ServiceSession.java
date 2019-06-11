@@ -2,7 +2,7 @@ package com.github.infrmods.xbus.client;
 
 import com.github.infrmods.xbus.exceptions.ErrorCode;
 import com.github.infrmods.xbus.exceptions.XBusException;
-import com.github.infrmods.xbus.item.Service;
+import com.github.infrmods.xbus.item.ZoneService;
 import com.github.infrmods.xbus.item.ServiceDesc;
 import com.github.infrmods.xbus.item.ServiceEndpoint;
 import com.github.infrmods.xbus.result.LeaseGrantResult;
@@ -64,7 +64,7 @@ public class ServiceSession {
     }
 
     public void unplug(String name, String version) throws XBusException {
-        services.remove(Service.genId(name, version));
+        services.remove(ZoneService.genId(name, version));
         client.unplugService(name, version);
     }
 
@@ -92,7 +92,7 @@ public class ServiceSession {
             LeaseGrantResult result = client.grantLease(ttl);
             ServiceDesc[] desces;
             synchronized (ServiceSession.this) {
-                leaseId = result.leaseId;
+                leaseId = result.getLeaseId();
                 desces = services.values().toArray(new ServiceDesc[0]);
             }
             PlugServiceResult r = client.plugAllWithLease(leaseId, null, desces, endpoint);

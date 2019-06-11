@@ -1,16 +1,24 @@
 package com.github.infrmods.xbus.item;
 
-/**
- * Created by lolynx on 6/14/16.
- */
-public class Service extends ServiceDesc {
-    public ServiceEndpoint[] endpoints;
+import java.util.HashMap;
 
-    public Service() {
+public class Service {
+    private String service;
+    private HashMap<String, ZoneService> zones;
+
+    public HashMap<String, ZoneService> getZones() {
+        return zones;
     }
 
-    public Service(String name, String version, String type, String proto, ServiceEndpoint[] endpoints) {
-        super(name, version, type, proto);
-        this.endpoints = endpoints;
+    public void setZones(HashMap<String, ZoneService> zones) {
+        this.zones = zones;
+    }
+
+    public String getService() {
+        return service;
+    }
+
+    public void setService(String service) {
+        this.service = service;
     }
 }

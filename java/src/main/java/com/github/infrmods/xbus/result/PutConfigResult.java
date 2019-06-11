@@ -6,5 +6,13 @@ package com.github.infrmods.xbus.result;
 public class PutConfigResult extends Result {
     public static final class RESPONSE extends Response<PutConfigResult> {}
 
-    long revision;
+    private long revision;
+
+    public long getRevision() {
+        return revision;
+    }
+
+    public void setRevision(long revision) {
+        this.revision = revision;
+    }
 }

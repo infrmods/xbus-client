@@ -1,13 +1,10 @@
 package com.github.infrmods.xbus.client;
 
 import com.github.infrmods.xbus.exceptions.DeadlineExceededException;
-import com.github.infrmods.xbus.item.Config;
-import com.github.infrmods.xbus.item.Service;
-import com.github.infrmods.xbus.item.ServiceDesc;
+import com.github.infrmods.xbus.item.*;
 import com.github.infrmods.xbus.result.*;
 import com.github.infrmods.xbus.exceptions.ErrorCode;
 import com.github.infrmods.xbus.exceptions.XBusException;
-import com.github.infrmods.xbus.item.ServiceEndpoint;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -24,8 +21,12 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         return "/api/configs/" + name;
     }
 
-    private String getServicePath(String name, String version) {
-        return "/api/services/" + name + "/" + version;
+    private String getServicePath(String service) {
+        return "/api/v1/services/" + service;
+    }
+
+    private String getServiceZonePath(String service, String zone) {
+        return "/api/v1/services/" + service + "/" + zone;
     }
 
     public XBusClient(XBusConfig config) throws TLSInitException {
@@ -34,8 +35,8 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public Config getConfig(String name) throws XBusException {
         GetConfigResult result = get(new UrlBuilder(getConfigPath(name)).url(), GetConfigResult.RESPONSE.class);
-        configRevisions.putIfAbsent(name, result.revision);
-        return result.config;
+        configRevisions.putIfAbsent(name, result.getRevision());
+        return result.getConfig();
     }
 
     public void putConfig(String name, String value) throws XBusException {
@@ -63,57 +64,58 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         } catch (DeadlineExceededException e) {
             return null;
         }
-        configRevisions.put(name, result.revision);
-        return result.config;
+        configRevisions.put(name, result.getRevision());
+        return result.getConfig();
     }
 
-    public Service getService(String name, String version) throws XBusException {
-        GetServiceResult result = get(new UrlBuilder(getServicePath(name, version)).url(),
+    public Service getService(String serviceKey) throws XBusException {
+        GetServiceResult result = get(new UrlBuilder(getServicePath(serviceKey)).url(),
                 GetServiceResult.RESPONSE.class);
-        serviceRevisions.putIfAbsent(Service.genId(name, version), result.revision);
-        if (!result.service.name.equals(name) || !result.service.version.equals(version)) {
-            throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + result.service.toString()));
+        Service service = result.getService();
+        if (!service.getService().equals(serviceKey)) {
+            throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + result.getService().toString()));
         }
-        return result.service;
+        serviceRevisions.putIfAbsent(service.getService(), result.getRevision());
+        return service;
     }
 
 
-    public Service watchService(String name, String version) throws XBusException {
-        return watchService(name, version, null);
+    public Service watchService(String service) throws XBusException {
+        return watchService(service, null);
     }
 
-    public Service watchService(String name, String version, Integer timeout) throws XBusException {
-        String id = Service.genId(name, version);
-        Long revision = serviceRevisions.get(id);
+    public Service watchService(String serviceKey, Integer timeout) throws XBusException {
+        Long revision = serviceRevisions.get(serviceKey);
         WatchServiceResult result;
         try {
-            result = get(new WatchUrlBuilder(getServicePath(name, version), revision, timeout).url(),
+            result = get(new WatchUrlBuilder(getServicePath(serviceKey), revision, timeout).url(),
                     WatchServiceResult.RESPONSE.class);
         } catch (DeadlineExceededException e) {
             return null;
         }
-        serviceRevisions.put(id, result.revision);
-        if (!result.service.name.equals(name) || !result.service.version.equals(version)) {
-            throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + result.service.toString()));
+        Service service = result.getService();
+        if (!service.getService().equals(serviceKey)) {
+            throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + service.toString()));
         }
-        return result.service;
+        serviceRevisions.put(service.getService(), result.getRevision());
+        return service;
     }
 
     PlugServiceResult plugWithLease(long leaseId, ServiceDesc desc, ServiceEndpoint endpoint) throws XBusException {
         PlugServiceResult result = post(
-                new UrlBuilder(getServicePath(desc.name, desc.version)).url(),
+                new UrlBuilder(getServicePath(desc.getService())).url(),
                 new FormBuilder()
                         .add("desc", gson.toJson(desc))
                         .add("endpoint", gson.toJson(endpoint))
                         .add("lease_id", leaseId).build(),
                 PlugServiceResult.RESPONSE.class);
-        addresses.put(desc.getId(), endpoint.address);
+        addresses.put(desc.getId(), endpoint.getAddress());
         return result;
     }
 
     PlugServiceResult plugAllWithLease(Long leaseId, Integer ttl, ServiceDesc[] desces, ServiceEndpoint endpoint) throws XBusException {
         PlugServiceResult result = post(
-                new UrlBuilder("/api/services").url(),
+                new UrlBuilder("/api/v1/services").url(),
                 new FormBuilder()
                         .add("desces", gson.toJson(desces))
                         .add("endpoint", gson.toJson(endpoint))
@@ -121,7 +123,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
                         .addIfNotNull("ttl", ttl).build(),
                 PlugServiceResult.RESPONSE.class);
         for (ServiceDesc desc : desces) {
-            addresses.put(desc.getId(), endpoint.address);
+            addresses.put(desc.getId(), endpoint.getAddress());
         }
         return result;
     }
@@ -132,45 +134,44 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public long plugService(ServiceDesc desc, ServiceEndpoint endpoint, Integer ttl) throws XBusException {
         PlugServiceResult result = post(
-                new UrlBuilder(getServicePath(desc.name, desc.version)).url(),
+                new UrlBuilder(getServicePath(desc.getService())).url(),
                 new FormBuilder()
                         .add("desc", gson.toJson(desc))
                         .add("endpoint", gson.toJson(endpoint))
                         .addIfNotNull("ttl", ttl).build(),
                 PlugServiceResult.RESPONSE.class);
-        leaseIds.put(desc.getId(), result.leaseId);
-        addresses.put(desc.getId(), endpoint.address);
-        return result.leaseId;
+        leaseIds.put(desc.getId(), result.getLeaseId());
+        addresses.put(desc.getId(), endpoint.getAddress());
+        return result.getLeaseId();
     }
 
     public long plugServices(ServiceDesc[] desces, ServiceEndpoint endpoint, Integer ttl) throws XBusException {
         PlugServiceResult result = post(
-                new UrlBuilder("/api/services").url(),
+                new UrlBuilder("/api/v1/services").url(),
                 new FormBuilder()
                         .add("desces", gson.toJson(desces))
                         .add("endpoint", gson.toJson(endpoint))
                         .addIfNotNull("ttl", ttl).build(),
                 PlugServiceResult.RESPONSE.class);
         for (ServiceDesc desc : desces) {
-            leaseIds.put(desc.getId(), result.leaseId);
-            addresses.put(desc.getId(), endpoint.address);
+            leaseIds.put(desc.getId(), result.getLeaseId());
+            addresses.put(desc.getId(), endpoint.getAddress());
         }
-        return result.leaseId;
+        return result.getLeaseId();
     }
 
-    public void unplugService(String name, String version) throws XBusException {
-        String serviceId = Service.genId(name, version);
+    public void unplugService(String service, String zone) throws XBusException {
+        String serviceId = ZoneService.genId(service, zone);
         leaseIds.remove(serviceId);
-        addresses.remove(serviceId);
-        delete(new UrlBuilder(getServicePath(name, version)).url(), VoidResult.RESPONSE.class);
+        String address = addresses.remove(serviceId);
+        delete(new UrlBuilder(getServiceZonePath(service, zone) + "/" + address).url(), VoidResult.RESPONSE.class);
     }
 
     public LeaseGrantResult grantLease(Integer ttl) throws XBusException {
-        LeaseGrantResult result = post(
+        return post(
                 new UrlBuilder("/api/leases").url(),
                 new FormBuilder().add("ttl", ttl).build(),
                 LeaseGrantResult.RESPONSE.class);
-        return result;
     }
 
     public void revokeLease(long leaseId) throws XBusException {
@@ -179,35 +180,6 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public void keepAliveLease(long leaseId) throws XBusException {
         post(new UrlBuilder("/api/leases/" + leaseId).url(), null, VoidResult.RESPONSE.class);
-    }
-
-    public void keepAliveService(String name, String version) throws XBusException {
-        String id = Service.genId(name, version);
-        String address = addresses.get(id);
-        if (address == null) {
-            throw new RuntimeException("missing address for " + id);
-        }
-        Long leaseId = leaseIds.get(id);
-        if (leaseId == null) {
-            throw new RuntimeException("missing keep id for " + id);
-        }
-        keepAliveLease(leaseId);
-    }
-
-    public void updateServiceConfig(String name, String version, String config) throws XBusException {
-        String id = Service.genId(name, version);
-        String address = addresses.get(id);
-        if (address == null) {
-            throw new RuntimeException("missing address for " + id);
-        }
-        Long leaseId = leaseIds.get(id);
-        if (leaseId == null) {
-            throw new RuntimeException("missing keep id for " + id);
-        }
-        ServiceEndpoint endpoint = new ServiceEndpoint(null, config);
-        put(new UrlBuilder(getServicePath(name, version)).url(),
-                new FormBuilder().add("endpoint", gson.toJson(endpoint)).build(),
-                VoidResult.RESPONSE.class);
     }
 
     public ServiceSession newServiceSession(ServiceEndpoint endpoint, int ttl) throws XBusException {

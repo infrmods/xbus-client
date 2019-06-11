@@ -4,8 +4,8 @@ package com.github.infrmods.xbus.client;
  * Created by lo on 4/7/17.
  */
 public class Endpoint {
-    public String host;
-    public Integer port;
+    private String host;
+    private Integer port;
 
     public Endpoint(String s) {
         if (s.startsWith("https://")) {
@@ -28,6 +28,22 @@ public class Endpoint {
 
     public Endpoint(String host, Integer port) {
         this.host = host;
+        this.port = port;
+    }
+
+    public String getHost() {
+        return host;
+    }
+
+    public void setHost(String host) {
+        this.host = host;
+    }
+
+    public Integer getPort() {
+        return port;
+    }
+
+    public void setPort(Integer port) {
         this.port = port;
     }
 }

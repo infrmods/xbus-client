@@ -9,11 +9,11 @@ import com.github.infrmods.xbus.item.ServiceEndpoint;
  * Created by lolynx on 6/14/16.
  */
 interface ServiceClient {
-    Service getService(String name, String version) throws XBusException;
+    Service getService(String service) throws XBusException;
 
-    Service watchService(String name, String version) throws XBusException;
+    Service watchService(String service) throws XBusException;
 
-    Service watchService(String name, String version, Integer timeout) throws XBusException;
+    Service watchService(String service, Integer timeout) throws XBusException;
 
     long plugService(ServiceDesc desc, ServiceEndpoint endpoint) throws XBusException;
 
@@ -21,9 +21,5 @@ interface ServiceClient {
 
     long plugServices(ServiceDesc[] desces, ServiceEndpoint endpoint, Integer ttl) throws XBusException;
 
-    void unplugService(String name, String version) throws XBusException;
-
-    void keepAliveService(String name, String version) throws XBusException;
-
-    void updateServiceConfig(String name, String version, String config) throws XBusException;
+    void unplugService(String service, String zone) throws XBusException;
 }

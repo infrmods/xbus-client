@@ -8,7 +8,22 @@ import com.github.infrmods.xbus.item.Service;
 public class GetServiceResult extends Result {
     public static final class RESPONSE extends Response<GetServiceResult> {}
 
-    public Service service;
+    private Service service;
+    private long revision;
 
-    public long revision;
+    public Service getService() {
+        return service;
+    }
+
+    public void setService(Service service) {
+        this.service = service;
+    }
+
+    public long getRevision() {
+        return revision;
+    }
+
+    public void setRevision(long revision) {
+        this.revision = revision;
+    }
 }

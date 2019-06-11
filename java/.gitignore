@@ -5,3 +5,6 @@ target
 xbus-client.iml
 *.jks
 *.pem
+.classpath
+.project
+.settings

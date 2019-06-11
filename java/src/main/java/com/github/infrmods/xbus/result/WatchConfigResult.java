@@ -8,7 +8,22 @@ import com.github.infrmods.xbus.item.Config;
 public class WatchConfigResult extends Result {
     public static class RESPONSE extends Response<WatchConfigResult> {}
 
-    public Config config;
+    private Config config;
+    private long revision;
 
-    public long revision;
+    public Config getConfig() {
+        return config;
+    }
+
+    public void setConfig(Config config) {
+        this.config = config;
+    }
+
+    public long getRevision() {
+        return revision;
+    }
+
+    public void setRevision(long revision) {
+        this.revision = revision;
+    }
 }

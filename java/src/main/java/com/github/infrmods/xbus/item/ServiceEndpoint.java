@@ -6,9 +6,8 @@ import org.apache.commons.lang3.builder.ReflectionToStringBuilder;
  * Created by lolynx on 6/14/16.
  */
 public class ServiceEndpoint {
-    public String address;
-
-    public String config;
+    private String address;
+    private String config;
 
     public ServiceEndpoint() {
     }
@@ -32,6 +31,22 @@ public class ServiceEndpoint {
             return Integer.valueOf(parts[parts.length - 1]);
         }
         return null;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getConfig() {
+        return config;
+    }
+
+    public void setConfig(String config) {
+        this.config = config;
     }
 
     public String toString() {

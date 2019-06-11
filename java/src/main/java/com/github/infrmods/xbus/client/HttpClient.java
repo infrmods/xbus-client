@@ -125,9 +125,9 @@ public class HttpClient {
 
         UrlBuilder(String path) {
             Endpoint endpoint = config.chooseEndpoint();
-            builder = new HttpUrl.Builder().scheme("https").host(endpoint.host).encodedPath(path);
-            if (endpoint.port != null) {
-                builder.port(endpoint.port);
+            builder = new HttpUrl.Builder().scheme("https").host(endpoint.getHost()).encodedPath(path);
+            if (endpoint.getPort() != null) {
+                builder.port(endpoint.getPort());
             }
         }
 
