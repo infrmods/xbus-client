@@ -185,4 +185,8 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
     public ServiceSession newServiceSession(ServiceEndpoint endpoint, int ttl) throws XBusException {
         return new ServiceSession(this, endpoint, ttl);
     }
+
+    public ServiceSession newServiceSession(ServiceEndpoint endpoint, int ttl, int keepInterval) throws XBusException {
+        return new ServiceSession(this, endpoint, ttl, keepInterval);
+    }
 }
