@@ -75,6 +75,7 @@ public class ServiceSession {
                 if (!e.code.equals(ErrorCode.NotFound)) {
                     throw e;
                 }
+                logger.warn("lease expired");
                 leaseId = null;
             }
         }
