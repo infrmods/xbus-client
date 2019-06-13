@@ -13,7 +13,6 @@ import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -21,7 +20,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class HttpClient {
     final Gson gson = new Gson();
-    private OkHttpClient client;
+    protected OkHttpClient client;
+    protected OkHttpClient watchClient;
     private XBusConfig config;
 
     HttpClient(XBusConfig config) throws TLSInitException {
@@ -74,18 +74,27 @@ public class HttpClient {
         client = new OkHttpClient.Builder()
                 .sslSocketFactory(sslContext.getSocketFactory(), trustManager)
                 .connectionPool(new ConnectionPool())
+                .connectTimeout(config.getHttpConnectTimeout(), TimeUnit.SECONDS)
                 .readTimeout(config.getHttpReadTimeout(), TimeUnit.SECONDS)
+                .build();
+        watchClient = client.newBuilder()
+                .readTimeout(config.getWatchReadTimeout(), TimeUnit.SECONDS)
                 .build();
     }
 
     <T extends Result> T get(HttpUrl url, Class<? extends Response<T>> cls) throws XBusException {
         Request request = requestBuilder().get().url(url).build();
-        return getResult(request, cls);
+        return getResult(request, cls, client);
+    }
+
+    <T extends Result> T get(HttpUrl url, Class<? extends Response<T>> cls, OkHttpClient httpClient) throws XBusException {
+        Request request = requestBuilder().get().url(url).build();
+        return getResult(request, cls, httpClient);
     }
 
     <T extends Result> T delete(HttpUrl url, Class<? extends Response<T>> cls) throws XBusException {
         Request request = requestBuilder().delete().url(url).build();
-        return getResult(request, cls);
+        return getResult(request, cls, client);
     }
 
     <T extends Result> T post(HttpUrl url, RequestBody requestBody, Class<? extends Response<T>> cls) throws XBusException {
@@ -93,12 +102,12 @@ public class HttpClient {
             requestBody = RequestBody.create(null, new byte[0]);
         }
         Request request = requestBuilder().post(requestBody).url(url).build();
-        return getResult(request, cls);
+        return getResult(request, cls, client);
     }
 
     <T extends Result> T put(HttpUrl url, RequestBody requestBody, Class<? extends Response<T>> cls) throws XBusException {
         Request request = requestBuilder().put(requestBody).url(url).build();
-        return getResult(request, cls);
+        return getResult(request, cls, client);
     }
 
     private Request.Builder requestBuilder() {
@@ -109,10 +118,10 @@ public class HttpClient {
         return builder;
     }
 
-    private <T extends Result> T getResult(Request request, Class<? extends Response<T>> cls) throws XBusException {
+    private <T extends Result> T getResult(Request request, Class<? extends Response<T>> cls, OkHttpClient httpClient) throws XBusException {
         String bodyContent;
         try {
-            bodyContent = client.newCall(request).execute().body().string();
+            bodyContent = httpClient.newCall(request).execute().body().string();
         } catch (IOException e) {
             throw new XBusException(ErrorCode.IOError, e);
         }

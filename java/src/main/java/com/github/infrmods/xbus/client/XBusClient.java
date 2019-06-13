@@ -89,7 +89,7 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         WatchServiceResult result;
         try {
             result = get(new WatchUrlBuilder(getServicePath(serviceKey), revision, timeout).url(),
-                    WatchServiceResult.RESPONSE.class);
+                    WatchServiceResult.RESPONSE.class, watchClient);
         } catch (DeadlineExceededException e) {
             return null;
         }

@@ -18,7 +18,9 @@ public class XBusConfig {
     private Endpoint[] endpoints;
     private KeyStore keyStore;
     private String keystorePassword;
-    private int httpReadTimeout = 5 * 60;
+    private int httpConnectTimeout = 5;
+    private int httpReadTimeout = 5;
+    private int watchReadTimeout = 2 * 60;
 
     public XBusConfig(String[] endpoints, String keystorePath, String keystorePassword) {
         this(Endpoint.convert(endpoints), keystorePath, keystorePassword);
@@ -90,5 +92,21 @@ public class XBusConfig {
 
     public void setKeyStore(KeyStore keyStore) {
         this.keyStore = keyStore;
+    }
+
+    public int getHttpConnectTimeout() {
+        return httpConnectTimeout;
+    }
+
+    public void setHttpConnectTimeout(int httpConnectTimeout) {
+        this.httpConnectTimeout = httpConnectTimeout;
+    }
+
+    public int getWatchReadTimeout() {
+        return watchReadTimeout;
+    }
+
+    public void setWatchReadTimeout(int watchReadTimeout) {
+        this.watchReadTimeout = watchReadTimeout;
     }
 }
