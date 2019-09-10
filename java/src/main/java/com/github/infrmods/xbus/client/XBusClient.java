@@ -35,7 +35,9 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
 
     public Config getConfig(String name) throws XBusException {
         GetConfigResult result = get(new UrlBuilder(getConfigPath(name)).url(), GetConfigResult.RESPONSE.class);
-        configRevisions.putIfAbsent(name, result.getRevision());
+        if (result.getRevision() > 0) {
+            configRevisions.putIfAbsent(name, result.getRevision());
+        }
         return result.getConfig();
     }
 
@@ -64,7 +66,9 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         } catch (DeadlineExceededException e) {
             return null;
         }
-        configRevisions.put(name, result.getRevision());
+        if (result.getRevision() > 0) {
+            configRevisions.put(name, result.getRevision());
+        }
         return result.getConfig();
     }
 
@@ -75,7 +79,9 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         if (!service.getService().equals(serviceKey)) {
             throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + result.getService().toString()));
         }
-        serviceRevisions.putIfAbsent(service.getService(), result.getRevision());
+        if (result.getRevision() > 0) {
+            serviceRevisions.putIfAbsent(service.getService(), result.getRevision());
+        }
         return service;
     }
 
@@ -97,7 +103,9 @@ public class XBusClient extends HttpClient implements ConfigClient, ServiceClien
         if (!service.getService().equals(serviceKey)) {
             throw new XBusException(ErrorCode.Unknown, new Exception("unmatched service: " + service.toString()));
         }
-        serviceRevisions.put(service.getService(), result.getRevision());
+        if (result.getRevision() > 0) {
+            serviceRevisions.put(service.getService(), result.getRevision());
+        }
         return service;
     }
 
