@@ -15,8 +15,8 @@ class Config(object):
         self.tag = tag
 
     @classmethod
-    def from_dict(Config, d):
-        return Config(d['name'], d['value'], d['version'], d.get('tag', None))
+    def from_dict(cls, d):
+        return cls(d['name'], d['value'], d['version'], d.get('tag', None))
 
     def __repr__(self):
         return '<Config: %s, version: %d>' % (self.name, self.version)
@@ -129,12 +129,15 @@ class ZoneService(object):
                  service,
                  type,
                  zone='default',
+                 extension=None,
                  proto=None,
                  description=None,
-                 endpoints=None):
+                 endpoints=None,
+                 **kwargs):
         self.service = service
         self.type = type
         self.zone = zone
+        self.extension = extension
         self.proto = proto
         self.description = description
         self.endpoints = []

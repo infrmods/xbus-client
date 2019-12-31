@@ -1,4 +1,3 @@
-
 class ErrorMeta(type):
     def __new__(meta, name, bases, attrs):
         newcls = super(ErrorMeta, meta).__new__(meta, name, bases, attrs)

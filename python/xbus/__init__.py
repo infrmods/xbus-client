@@ -1,2 +1,7 @@
-from .client import XBusClient, Config, Service, ServiceEndpoint
-from .error import XBusError, NotFoundError, NotPermittedError
+from .client import Config, Service, ServiceEndpoint, XBusClient
+from .error import NotFoundError, NotPermittedError, XBusError
+
+__all__ = [
+    'XBusClient', 'Config', 'Service', 'ServiceEndpoint', 'XBusError',
+    'NotFoundError', 'NotPermittedError'
+]

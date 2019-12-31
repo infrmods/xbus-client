@@ -2,13 +2,11 @@
 import os
 from setuptools import setup
 
-
 with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as f:
     requirements = [l for l in f.readlines() if l.strip()]
 
-
 setup(name='xbus',
-      version='0.1.12',
+      version='0.1.13',
       description='python client for xbus',
       author='Jiong Du',
       author_email='londevil@gmail.com',
