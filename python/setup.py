@@ -6,7 +6,7 @@ with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as f:
     requirements = [l for l in f.readlines() if l.strip()]
 
 setup(name='xbus',
-      version='0.1.13',
+      version='0.1.14',
       description='python client for xbus',
       author='Jiong Du',
       author_email='londevil@gmail.com',

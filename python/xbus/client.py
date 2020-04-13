@@ -129,7 +129,6 @@ class ZoneService(object):
                  service,
                  type,
                  zone='default',
-                 extension=None,
                  proto=None,
                  description=None,
                  endpoints=None,
@@ -137,7 +136,6 @@ class ZoneService(object):
         self.service = service
         self.type = type
         self.zone = zone
-        self.extension = extension
         self.proto = proto
         self.description = description
         self.endpoints = []

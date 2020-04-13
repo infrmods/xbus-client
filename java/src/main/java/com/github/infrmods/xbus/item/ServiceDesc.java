@@ -11,7 +11,6 @@ public class ServiceDesc {
     private String service;
     private String zone;
     private String type;
-    private String extension;
     private String proto;
     private String description;
 
@@ -51,14 +50,6 @@ public class ServiceDesc {
 
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getExtension() {
-        return extension;
-    }
-
-    public void setExtension(String extension) {
-        this.extension = extension;
     }
 
     public String getProto() {
